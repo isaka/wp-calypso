@@ -142,7 +142,9 @@
 
 		"accept-invite": true,
 
-		"mailing-lists/unsubscribe": true
+		"mailing-lists/unsubscribe": true,
+
+	  	"hello-world": true
 	},
 	"muse_supported_themes": [
 		"pub/twentytwelve",
