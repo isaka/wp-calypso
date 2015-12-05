@@ -2,7 +2,6 @@
  * External dependencies
  */
 import React from 'react';
-import debugFactory from 'debug';
 
 /**
  * Internal dependencies
@@ -16,14 +15,25 @@ import CompactCard from 'components/card/compact';
 import BackButton from 'components/header-cake';
 import Gridicon from 'components/gridicon';
 
-const debug = debugFactory( 'calypso:steps:survey' );
-
 export default React.createClass( {
 	displayName: 'SurveyStep',
 
+	propTypes: {
+		isOneStep: React.PropTypes.bool,
+		surveySiteType: React.PropTypes.string
+	},
+
+	getDefaultProps() {
+		return {
+			surveySiteType: 'site',
+			isOneStep: false
+		}
+	},
+
 	getInitialState() {
 		return {
-			stepOne: null
+			stepOne: null,
+			verticalList: verticals.get()
 		}
 	},
 
@@ -37,8 +47,9 @@ export default React.createClass( {
 
 	renderStepOneVertical( vertical ) {
 		const icon = vertical.icon || 'user';
+		const stepOneClickHandler = this.props.isOneStep ? this.handleNextStep.bind( null, vertical ) : this.showStepTwo.bind( null, vertical );
 		return (
-			<Card className="survey-step__vertical" key={ 'step-one-' + vertical.value } href="#" onClick={ this.showStepTwo.bind( null, vertical ) }>
+			<Card className="survey-step__vertical" key={ 'step-one-' + vertical.value } href="#" onClick={ stepOneClickHandler }>
 				<Gridicon icon={ icon } className="survey-step__vertical__icon"/>
 				<label className="survey-step__label">{ vertical.label }</label>
 			</Card>
@@ -54,25 +65,28 @@ export default React.createClass( {
 				</div>
 			);
 		}
+		const blogLabel = this.translate( 'What is your blog about?' );
+		const siteLabel = this.translate( 'What is your website about?' );
 		return (
 			<div>
 				<CompactCard className="survey-step__title">
-					<label className="survey-step__label">{ this.translate( 'What is your website about?' ) }</label>
+					<label className="survey-step__label">{ this.props.surveySiteType === 'blog' ? blogLabel : siteLabel }</label>
 				</CompactCard>
-				{ verticals.get().map( this.renderStepOneVertical ) }
+				{ this.state.verticalList.map( this.renderStepOneVertical ) }
 			</div>
 		);
 	},
 
 	render() {
-		debug( this.props.stepSectionName );
+		const blogHeaderText = this.translate( 'Create your blog today!' );
+		const siteHeaderText = this.translate( 'Create your site today!' );
 		return (
 			<div className="survey-step__section-wrapper">
 				<StepWrapper
 					flowName={ this.props.flowName }
 					stepName={ this.props.stepName }
 					positionInFlow={ this.props.positionInFlow }
-					headerText={ this.translate( 'Create your site today!' ) }
+					headerText={ this.props.surveySiteType === 'blog' ? blogHeaderText : siteHeaderText }
 					subHeaderText={ this.translate( 'WordPress.com is the best place for your WordPress blog or website.' ) }
 					signupProgressStore={ this.props.signupProgressStore }
 					stepContent={ this.renderOptionList() } />
@@ -93,8 +107,14 @@ export default React.createClass( {
 	},
 
 	handleNextStep( vertical ) {
+		const { value, label } = vertical;
 		analytics.tracks.recordEvent( 'calypso_survey_site_type', { type: this.props.surveySiteType } );
-		analytics.tracks.recordEvent( 'calypso_survey_category_click_level_two', { category: JSON.stringify( vertical ) } );
+		analytics.tracks.recordEvent( 'calypso_survey_category_chosen', { category: JSON.stringify( { value, label } ) } );
+		if ( this.state.stepOne ) {
+			analytics.tracks.recordEvent( 'calypso_survey_category_click_level_two', { category: JSON.stringify( { value, label } ) } );
+		} else {
+			analytics.tracks.recordEvent( 'calypso_survey_category_click_level_one', { category: JSON.stringify( { value, label } ) } );
+		}
 		SignupActions.submitSignupStep( { stepName: this.props.stepName }, [], { surveySiteType: this.props.surveySiteType, surveyQuestion: vertical.value } );
 		this.props.goToNextStep();
 	}

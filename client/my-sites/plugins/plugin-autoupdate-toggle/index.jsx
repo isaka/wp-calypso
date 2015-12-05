@@ -18,12 +18,17 @@ module.exports = React.createClass( {
 	displayName: 'PluginAutopdateToggle',
 
 	propTypes: {
+		isMock: React.PropTypes.bool,
 		site: React.PropTypes.object.isRequired,
 		plugin: React.PropTypes.object.isRequired,
 		wporg: React.PropTypes.bool
 	},
 
 	toggleAutoupdates: function() {
+		if ( this.props.isMock ) {
+			return;
+		}
+
 		PluginsActions.togglePluginAutoUpdate( this.props.site, this.props.plugin );
 		PluginsActions.removePluginsNotices( this.props.notices.completed.concat( this.props.notices.errors ) );
 
@@ -63,7 +68,7 @@ module.exports = React.createClass( {
 			} );
 		}
 
-		if ( this.props.site.options.unmapped_url !== this.props.site.options.main_network_site ) {
+		if ( ! utils.isMainNetworkSite( this.props.site ) ) {
 			return this.translate( 'Only the main site on a multi-site installation can enable autoupdates for plugins.', {
 				args: { site: this.props.site.title }
 			} );

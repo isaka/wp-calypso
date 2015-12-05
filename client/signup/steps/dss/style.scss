@@ -1,13 +1,12 @@
 .dss-theme-selection__search {
 	margin: 0 auto;
-	max-width: 300px;
 
 	@include breakpoint( ">660px" ) {
 		max-width: 620px;
 	}
 
 	@include breakpoint( ">960px" ) {
-		max-width: 650px;
+		max-width: 940px;
 	}
 }
 
@@ -54,16 +53,16 @@
 
 // Center themes, regardless of how many columns.
 .dss-theme-selection__screenshots__themes {
-       margin: 0 auto;
-       width: 300px;
+	margin: 0 auto;
+	width: 300px;
 
-       @include breakpoint( ">660px" ) {
-               width: 640px;
-       }
+	@include breakpoint( ">660px" ) {
+		width: 640px;
+	}
 
-       @include breakpoint( ">960px" ) {
-               width: 960px;
-       }
+	@include breakpoint( ">960px" ) {
+		width: 960px;
+	}
 }
 
 // Show the original screenshot image when the screenshot markup is loading.
@@ -143,4 +142,8 @@
 	margin: 20px auto;
 	padding: 0 20px;
 	text-align: center;
+}
+
+.dss-theme-selection__image-preloader {
+	display: none;
 }

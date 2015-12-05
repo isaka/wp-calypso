@@ -12,8 +12,9 @@ var React = require( 'react' ),
 var SearchCard = require( 'components/search-card' ),
 	SearchDemo = require( 'components/search/docs/example' ),
 	Typography = require( 'components/typography/docs/example' ),
-	Notices = require( 'components/notices/docs/example' ),
+	Notices = require( 'components/notice/docs/example' ),
 	Buttons = require( 'components/button/docs/example' ),
+	RemoveButtons = require( 'components/remove-button/docs/example' ),
 	ButtonGroups = require( 'components/button-group/docs/example' ),
 	AddNewButtons = require( 'components/add-new-button/docs/example' ),
 	CommentButtons = require( 'components/comment-button/docs/example' ),
@@ -53,6 +54,7 @@ var SearchCard = require( 'components/search-card' ),
 	Version = require( 'components/version/docs/example' ),
 	BulkSelect = require( 'components/bulk-select/docs/example' ),
 	ExternalLink = require( 'components/external-link/docs/example' ),
+	FeatureGate = require( 'components/feature-example/docs/example' ),
 	Collection,
 	FilterSummary,
 	Hider;
@@ -180,6 +182,7 @@ module.exports = React.createClass( {
 					<Typography />
 					<Notices />
 					<Buttons />
+					<RemoveButtons />
 					<ButtonGroups />
 					<AddNewButtons />
 					<CommentButtons />
@@ -207,6 +210,7 @@ module.exports = React.createClass( {
 					<Count />
 					<Version />
 					<ExternalLink />
+					<FeatureGate />
 					<DatePicker />
 					<Spinners />
 					<Theme />

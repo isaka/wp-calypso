@@ -25,7 +25,7 @@ var Site = require( './site' ),
  * so that they will be successful. This is not a sufficent measure
  * against spam as these keys are exposed publicly
  *
- * @param { object } query Add client_id and client_secret to the query.
+ * @param { object } query - Add client_id and client_secret to the query.
  */
 function restrictByOauthKeys( query ) {
 	query.client_id = config( 'wpcom_signup_id' );
@@ -35,9 +35,8 @@ function restrictByOauthKeys( query ) {
 /**
  * Create an `Undocumented` instance
  *
- * @param {WPCOM} wpcom The request handler
- * @api public
- * @returns {Undocumented} An instance of Undocumented
+ * @param {WPCOM} wpcom - The request handler
+ * @returns {Undocumented} - An instance of Undocumented
  */
 function Undocumented( wpcom ) {
 	if ( ! ( this instanceof Undocumented ) ) {
@@ -289,9 +288,11 @@ Undocumented.prototype.getInvite = function( siteId, inviteKey, fn ) {
 	this.wpcom.req.get( { path: '/sites/' + siteId + '/invites/' + inviteKey }, fn );
 };
 
-Undocumented.prototype.acceptInvite = function( siteId, inviteKey, fn ) {
+Undocumented.prototype.acceptInvite = function( invite, fn ) {
 	debug( '/sites/:site_id:/invites/:inviteKey:/accept query' );
-	this.wpcom.req.get( '/sites/' + siteId + '/invites/' + inviteKey + '/accept', fn );
+	this.wpcom.req.get( '/sites/' + invite.site.ID + '/invites/' + invite.inviteKey + '/accept', {
+		activate: invite.activationKey
+	}, fn );
 };
 
 /**
@@ -1643,9 +1644,9 @@ Undocumented.prototype.changeTheme = function( siteSlug, data, fn ) {
 	}, fn );
 };
 
-Undocumented.prototype.siteUpgrades = function( siteId, fn ) {
-	debug( '/site/:site_id/upgrades' );
-	this.wpcom.req.get( { path: '/sites/' + siteId + '/upgrades' }, fn );
+Undocumented.prototype.sitePurchases = function( siteId, fn ) {
+	debug( '/site/:site_id/purchases' );
+	this.wpcom.req.get( { path: '/sites/' + siteId + '/purchases' }, fn );
 };
 
 Undocumented.prototype.googleAppsListAll = function( domainName, fn ) {
@@ -1736,7 +1737,8 @@ Undocumented.prototype.cancelPrivateRegistration = function( purchaseId, fn ) {
 	debug( 'upgrades/{purchaseId}/cancel-privacy-protection' );
 
 	this.wpcom.req.post( {
-		path: `/upgrades/${purchaseId}/cancel-privacy-protection`
+		path: `/upgrades/${purchaseId}/cancel-privacy-protection`,
+		apiVersion: '1.1'
 	}, fn );
 };
 
@@ -1759,6 +1761,13 @@ Undocumented.prototype.getOlarkConfiguration = function( fn ) {
 	this.wpcom.req.get( {
 		apiVersion: '1.1',
 		path: '/help/olark/mine'
+	}, fn );
+};
+
+Undocumented.prototype.submitSupportForumsTopic = function( subject, message, fn ) {
+	this.wpcom.req.post( {
+		path: '/help/forums/support/topics/new',
+		body: { subject, message }
 	}, fn );
 };
 
