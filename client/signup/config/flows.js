@@ -2,13 +2,15 @@
  * External dependencies
  */
 var assign = require( 'lodash/object/assign' ),
-	reject = require( 'lodash/collection/reject' );
+	reject = require( 'lodash/collection/reject' ),
+	page = require( 'page' );
 
 /**
 * Internal dependencies
 */
 var config = require( 'config' ),
 	stepConfig = require( './steps' ),
+	abtest = require( 'lib/abtest' ).abtest,
 	user = require( 'lib/user' )();
 
 function getCheckoutDestination( dependencies ) {
@@ -64,18 +66,11 @@ const flows = {
 		lastModified: '2015-09-22'
 	},
 
-	'vert-blog': {
-		steps: [ 'survey-blog', 'themes', 'domains', 'plans', 'survey-user' ],
+	verticals: {
+		steps: [ 'survey', 'themes', 'domains', 'plans', 'survey-user' ],
 		destination: getCheckoutDestination,
-		description: 'Categorizing blog signups',
-		lastModified: null
-	},
-
-	'vert-site': {
-		steps: [ 'survey-site', 'themes', 'domains', 'plans', 'survey-user' ],
-		destination: getCheckoutDestination,
-		description: 'Categorizing site signups',
-		lastModified: null
+		description: 'Categorizing blog signups for Verticals Survey',
+		lastModified: '2015-12-10'
 	},
 
 	headstart: {
@@ -134,13 +129,31 @@ const flows = {
 		lastModified: '2015-11-13'
 	},
 
+	layout: {
+		steps: [ 'design-type', 'themes', 'domains', 'plans', 'user' ],
+		destination: getCheckoutDestination,
+		description: 'Theme trifurcation flow',
+		lastModified: '2015-12-14'
+	},
+
 	developer: {
 		steps: [ 'themes', 'site', 'user' ],
 		destination: '/devdocs/welcome',
 		description: 'Signup flow for developers in developer environment',
 		lastModified: '2015-11-23'
-	}
+	},
 
+	jetpack: {
+		steps: [ 'jetpack-user' ],
+		destination: '/'
+	},
+
+	'free-trial': {
+		steps: [ 'themes', 'site', 'plans', 'user' ],
+		destination: getCheckoutDestination,
+		description: 'Signup flow for free trials',
+		lastModified: '2015-12-18'
+	}
 };
 
 function removeUserStepFromFlow( flow ) {
@@ -153,8 +166,17 @@ function removeUserStepFromFlow( flow ) {
 	} );
 }
 
+function getCurrentFlowNameFromTest( currentURL ) {
+	// Consider remaining homepage users for the Triforce AB test.
+	if ( '/start/en?ref=homepage' === currentURL && 'triforce' === abtest( 'triforce' ) ) {
+		return 'layout';
+	}
+
+	return 'main';
+}
+
 module.exports = {
-	currentFlowName: 'main',
+	currentFlowName: getCurrentFlowNameFromTest( page.current ),
 
 	defaultFlowName: 'main',
 

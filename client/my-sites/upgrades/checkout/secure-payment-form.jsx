@@ -1,12 +1,14 @@
 /**
  * External dependencies
  */
-var React = require( 'react/addons' );
+var React = require( 'react' );
 
 /**
  * Internal dependencies
  */
 var CreditCardPaymentBox = require( './credit-card-payment-box' ),
+	EmptyContent = require( 'components/empty-content' ),
+	FreeTrialConfirmationBox = require( './free-trial-confirmation-box' ),
 	PayPalPaymentBox = require( './paypal-payment-box' ),
 	CreditsPaymentBox = require( './credits-payment-box' ),
 	FreeCartPaymentBox = require( './free-cart-payment-box' ),
@@ -16,6 +18,7 @@ var CreditCardPaymentBox = require( './credit-card-payment-box' ),
 	cartValues = require( 'lib/cart-values' ),
 	isPaidForFullyInCredits = cartValues.isPaidForFullyInCredits,
 	isFree = cartValues.isFree,
+	hasFreeTrial = cartValues.cartItems.hasFreeTrial,
 	countriesList = require( 'lib/countries-list' ).forPayments(),
 	analytics = require( 'analytics' ),
 	TransactionStepsMixin = require( './transaction-steps-mixin' ),
@@ -43,11 +46,16 @@ var SecurePaymentForm = React.createClass( {
 			return 'credits';
 		} else if ( isFree( cart ) ) {
 			return 'free-cart';
+		} else if ( hasFreeTrial( cart ) ) {
+			return 'free-trial';
 		} else if ( this.state && this.state.userSelectedPaymentBox ) {
 			return this.state.userSelectedPaymentBox;
-		} else {
-			// Default state
+		} else if ( cartValues.isCreditCardPaymentsEnabled( cart ) ) {
 			return 'credit-card';
+		} else if ( cartValues.isPayPalExpressEnabled( cart ) ) {
+			return 'paypal';
+		} else {
+			return null;
 		}
 	},
 
@@ -70,11 +78,28 @@ var SecurePaymentForm = React.createClass( {
 	},
 
 	render: function() {
+		if ( this.state.visiblePaymentBox === null ) {
+			return (
+				<EmptyContent
+					illustration='/calypso/images/drake/drake-500.svg'
+					title={ this.translate( 'Checkout is not available' ) }
+					line={ this.translate( "We're hard at work on the issue. Please check back shortly." ) }
+					action={ this.translate( 'Back to Plans' ) }
+					actionURL={ '/plans/' + this.props.selectedSite.slug } />
+			);
+		}
+
 		return (
 			<div className="secure-payment-form">
 				<CreditsPaymentBox
 					cart={ this.props.cart }
 					selected={ this.state.visiblePaymentBox === 'credits' }
+					onSubmit={ this.handlePaymentBoxSubmit }
+					transactionStep={ this.props.transaction.step } />
+
+				<FreeTrialConfirmationBox
+					cart={ this.props.cart }
+					selected={ this.state.visiblePaymentBox === 'free-trial' }
 					onSubmit={ this.handlePaymentBoxSubmit }
 					transactionStep={ this.props.transaction.step } />
 
@@ -131,6 +156,7 @@ var SecurePaymentForm = React.createClass( {
 
 		switch ( this.state.visiblePaymentBox ) {
 			case 'credits':
+			case 'free-trial':
 			case 'free-cart':
 				// FIXME: The endpoint doesn't currently support transactions with no
 				//   payment info, so for now we rely on the credits payment method for
@@ -150,12 +176,11 @@ var SecurePaymentForm = React.createClass( {
 				// We do nothing here because PayPal transactions don't go through the
 				// `store-transactions` module.
 				break;
-
-			default:
-				throw new Error( 'Not implemented' );
 		}
 
-		upgradesActions.setPayment( newPayment );
+		if ( newPayment ) {
+			upgradesActions.setPayment( newPayment );
+		}
 	},
 
 	selectPaymentBox: function( paymentBox ) {

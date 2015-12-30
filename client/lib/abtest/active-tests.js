@@ -30,7 +30,7 @@ module.exports = {
 		allowAnyLocale: true
 	},
 	plansPageBusinessAATest: {
-		datestamp: '20151104',
+		datestamp: '20151221',
 		variations: {
 			originalA: 50,
 			originalB: 50
@@ -45,4 +45,21 @@ module.exports = {
 		},
 		defaultVariation: 'drake'
 	},
+	triforce: {
+		datestamp: '20151216',
+		variations: {
+			main: 40,
+			triforce: 40,
+			notTested: 20
+		},
+		defaultVariation: 'main'
+	},
+	autoFillUsernameSignup: {
+		datestamp: '20151216',
+		variations: {
+			autoFill: 50,
+			dontAutoFill: 50
+		},
+		defaultVariation: 'dontAutoFill'
+	}
 };

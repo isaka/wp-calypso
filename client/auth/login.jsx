@@ -1,7 +1,9 @@
 /**
  * External dependencies
  */
+import ReactDom from 'react-dom';
 import React from 'react';
+import LinkedStateMixin from 'react-addons-linked-state-mixin';
 
 /**
  * Internal dependencies
@@ -12,12 +14,13 @@ import FormPasswordInput from 'components/forms/form-password-input';
 import FormFieldset from 'components/forms/form-fieldset';
 import FormButton from 'components/forms/form-button';
 import FormButtonsBar from 'components/forms/form-buttons-bar';
-import Notice from 'notices/notice';
+import Notice from 'components/notice';
 import AuthStore from 'lib/oauth-store';
 import * as AuthActions from 'lib/oauth-store/actions';
 import eventRecorder from 'me/event-recorder';
 import Gridicon from 'components/gridicon';
 import WordPressLogo from 'components/wordpress-logo';
+import AuthCodeButton from './auth-code-button';
 
 const LostPassword = React.createClass( {
 	render: function() {
@@ -27,14 +30,14 @@ const LostPassword = React.createClass( {
 					{ this.translate( 'Lost your password?' ) }
 				</a>
 			</p>
-        );
+		);
 	}
 } );
 
 module.exports = React.createClass( {
 	displayName: 'Auth',
 
-	mixins: [ React.addons.LinkedStateMixin, eventRecorder ],
+	mixins: [ LinkedStateMixin, eventRecorder ],
 
 	componentDidMount: function() {
 		AuthStore.on( 'change', this.refreshData );
@@ -50,7 +53,7 @@ module.exports = React.createClass( {
 
 	componentDidUpdate() {
 		if ( this.state.requires2fa && this.state.inProgress === false ) {
-			this.refs.auth_code.getDOMNode().focus();
+			ReactDom.findDOMNode( this.refs.auth_code ).focus();
 		}
 	},
 
@@ -142,6 +145,7 @@ module.exports = React.createClass( {
 					</FormButtonsBar>
 					{ ! requires2fa && <LostPassword /> }
 					{ errorMessage && <Notice text={ errorMessage } status={ errorLevel } showDismiss={ false } /> }
+					{ requires2fa && <AuthCodeButton username={ this.state.login } password={ this.state.password } /> }
 				</form>
 				<a className="auth__help" target="_blank" title={ this.translate( 'Visit the WordPress.com support site for help' ) } href="https://en.support.wordpress.com/">
 					<Gridicon icon="help" />

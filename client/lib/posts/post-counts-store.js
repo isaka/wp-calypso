@@ -11,7 +11,7 @@ var sum = require( 'lodash/math/sum' ),
  * Internal dependencies
  */
 var emitter = require( 'lib/mixins/emitter' ),
-	PostListStore = require( './post-list-store' ),
+	PostListStore = require( './post-list-store-factory' )(),
 	PostsStore = require( './posts-store' ),
 	sites = require( 'lib/sites-list' )(),
 	postUtils = require( 'lib/posts/utils' ),
@@ -102,13 +102,13 @@ PostCountsStore.dispatchToken = Dispatcher.register( function( payload ) {
 	switch ( action.type ) {
 		case 'RECEIVE_UPDATED_POSTS':
 		case 'RECEIVE_POSTS_PAGE':
-			if ( data.meta && data.meta.data && data.meta.data.counts ) {
+			if ( data && data.meta && data.meta.data && data.meta.data.counts ) {
 				setPostCounts( data.meta.data.counts );
 			}
 			break;
 
 		case 'RECEIVE_POST_COUNTS':
-			if ( data.counts && action.siteId ) {
+			if ( data && data.counts && action.siteId ) {
 				setPostCounts( data, action.siteId );
 			}
 			break;
@@ -181,7 +181,7 @@ function updateCountsWhenPostChanges( post, original ) {
 	PostCountsStore.emit( 'change' );
 }
 
- /*
+/*
  * Update post counts when a post is created
  *
  * @param {Object} post - current post state

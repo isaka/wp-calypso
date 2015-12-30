@@ -4,6 +4,7 @@ import { appStates } from './constants';
 
 // Left( UI ) - Right( API )
 const importerStateMap = [
+	[ appStates.DEFUNCT, 'importStopped' ],
 	[ appStates.DISABLED, 'disabled' ],
 	[ appStates.IMPORT_FAILURE, 'importer-import-failure' ],
 	[ appStates.IMPORT_SUCCESS, 'importer-import-success' ],
@@ -51,14 +52,15 @@ function replaceUserInfoWithIds( customData ) {
 }
 
 export function fromApi( state ) {
-	const { importId: importerId, importStatus, type, progress, customData } = state;
+	const { importId: importerId, importStatus, type, progress, customData, siteId } = state;
 
 	return {
 		importerId,
 		importerState: apiToAppState( importStatus ),
 		type: `importer-type-${ type }`,
 		progress: fromJS( progress ),
-		customData: fromJS( generateSourceAuthorIds( customData ) )
+		customData: fromJS( generateSourceAuthorIds( customData ) ),
+		site: { ID: siteId }
 	};
 }
 
@@ -67,7 +69,7 @@ export function toApi( state ) {
 
 	return Object.assign( {},
 		{ importerId, progress },
-		{ importerState: appStateToApi( importerState ) },
+		{ importerStatus: appStateToApi( importerState ) },
 		site && site.ID ? { siteId: site.ID } : {},
 		{ type: type.replace( 'importer-type-', '' ) },
 		customData ? { customData: replaceUserInfoWithIds( customData ) } : {}

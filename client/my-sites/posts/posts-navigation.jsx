@@ -1,7 +1,7 @@
 /**
  * External Dependencies
  */
-import React from 'react/addons';
+import React from 'react';
 import Debug from 'debug';
 
 /**
@@ -134,6 +134,7 @@ export default React.createClass( {
 				}
 				<Search
 					pinned={ true }
+					siteID={ this.props.siteID }
 					onSearch={ this.doSearch }
 					initialValue={ this.props.search }
 					placeholder={ 'Search ' + statusTabs.selectedText + '...' }

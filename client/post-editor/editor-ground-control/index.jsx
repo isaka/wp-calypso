@@ -2,7 +2,8 @@
  * External dependencies
  */
 var noop = require( 'lodash/utility/noop' ),
-	React = require( 'react/addons' );
+	React = require( 'react' ),
+	PureRenderMixin = require( 'react-pure-render/mixin' );
 
 /**
  * Internal dependencies
@@ -46,7 +47,7 @@ module.exports = React.createClass( {
 		type: React.PropTypes.string
 	},
 
-	mixins: [ React.addons.PureRenderMixin ],
+	mixins: [ PureRenderMixin ],
 
 	getDefaultProps: function() {
 		return {
@@ -69,7 +70,6 @@ module.exports = React.createClass( {
 			showSchedulePopover: false,
 			showAdvanceStatus: false,
 			showDateTooltip: false,
-			siteTooltip: false,
 			firstDayOfTheMonth: this.getFirstDayOfTheMonth(),
 			lastDayOfTheMonth: this.getLastDayOfTheMonth()
 		};
@@ -258,14 +258,6 @@ module.exports = React.createClass( {
 		this.setState( { showAdvanceStatus: ! this.state.showAdvanceStatus } );
 	},
 
-	showSiteTooltip: function() {
-		this.setState( { siteTooltip: true } );
-	},
-
-	hideSiteTooltip: function() {
-		this.setState( { siteTooltip: false } );
-	},
-
 	onPrimaryButtonClick: function() {
 		this.trackPrimaryButton();
 
@@ -329,17 +321,9 @@ module.exports = React.createClass( {
 					<Site
 						site={ this.props.site }
 						indicator={ false }
-						href={ this.props.site.URL }
+						homeLink={ true }
 						externalLink={ true }
-						ref="site"
-						onMouseEnter={ this.showSiteTooltip }
-						onMouseLeave={ this.hideSiteTooltip }
 					/>
-					<Tooltip context={ this.refs && this.refs.site } isVisible={ this.state.siteTooltip } position="right">
-						<span className="editor-ground-control__view-site-tooltip">
-							{ this.translate( 'View site' ) }
-						</span>
-					</Tooltip>
 					<hr className="editor-ground-control__separator" />
 					<div className="editor-ground-control__status">
 						<StatusLabel

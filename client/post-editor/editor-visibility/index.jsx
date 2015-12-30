@@ -1,6 +1,7 @@
 /**
  * External dependencies
  */
+import ReactDom from 'react-dom';
 import React from 'react';
 import includes from 'lodash/collection/includes';
 import classNames from 'classnames';
@@ -107,7 +108,7 @@ module.exports = React.createClass( {
 			return true;
 		}
 
-		password = React.findDOMNode( this.refs.postPassword ).value.trim();
+		password = ReactDom.findDOMNode( this.refs.postPassword ).value.trim();
 
 		return password.length;
 	},
@@ -143,7 +144,7 @@ module.exports = React.createClass( {
 		}
 
 		return (
-			<FormSettingExplanation>{ infotext }</FormSettingExplanation>
+			<FormSettingExplanation className={ visibility }>{ infotext }</FormSettingExplanation>
 		);
 	},
 
@@ -177,7 +178,7 @@ module.exports = React.createClass( {
 	onKey( event ) {
 		var password;
 
-		password = React.findDOMNode( this.refs.postPassword ).value.trim();
+		password = ReactDom.findDOMNode( this.refs.postPassword ).value.trim();
 
 		if ( event.key === 'Backspace' &&
 			! password.length ) {
@@ -256,6 +257,7 @@ module.exports = React.createClass( {
 					value={ value }
 					isError={ isError }
 					ref="postPassword"
+					className={ this.state.showVisibilityInfotips ? 'is-info-open' : null }
 					placeholder={ this.translate( 'Create password', { context: 'Editor: Create password for post' } ) }
 				/>
 

@@ -2,7 +2,8 @@
  * External dependencies
  */
 var map = require( 'lodash/collection/map' ),
-	React = require( 'react/addons' ),
+	React = require( 'react' ),
+	PureRenderMixin = require( 'react-pure-render/mixin' ),
 	classNames = require( 'classnames' ),
 	scrollIntoView = require( 'dom-scroll-into-view' );
 
@@ -26,7 +27,7 @@ var SuggestionsList = React.createClass( {
 		};
 	},
 
-	mixins: [ React.addons.PureRenderMixin ],
+	mixins: [ PureRenderMixin ],
 
 	componentDidUpdate: function( prevProps ) {
 		var node;
@@ -35,7 +36,7 @@ var SuggestionsList = React.createClass( {
 		// when already expanded
 		if ( prevProps.isExpanded && this.props.isExpanded && this.props.selectedIndex > -1 && this.props.scrollIntoView ) {
 			this._scrollingIntoView = true;
-			node = this.getDOMNode();
+			node = this.refs.list;
 
 			scrollIntoView( node.children[ this.props.selectedIndex ], node, {
 				onlyScrollIfNeeded: true
@@ -75,7 +76,7 @@ var SuggestionsList = React.createClass( {
 		// why, since usually a div isn't focusable by default
 		// TODO does this still apply now that it's a <ul> and not a <div>?
 		return (
-			<ul className={ classes } tabIndex="-1">
+			<ul ref="list" className={ classes } tabIndex="-1">
 				{ this._renderSuggestions() }
 			</ul>
 		);

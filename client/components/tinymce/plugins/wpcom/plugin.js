@@ -23,8 +23,8 @@ function wpcomPlugin( editor ) {
 		style;
 
 	editor.on( 'focus', function() {
-        window.wpActiveEditor = editor.id;
-    } );
+		window.wpActiveEditor = editor.id;
+	} );
 
 	// Replace Read More/Next Page tags with images and apply wpautop
 	editor.on( 'BeforeSetContent', function( event ) {
@@ -149,7 +149,7 @@ function wpcomPlugin( editor ) {
 
 	editor.addButton( 'wp_help', {
 		tooltip: 'Keyboard Shortcuts',
-		cmd: 'Wpcom_Help'
+		cmd: 'WP_Help'
 	} );
 
 	editor.addButton( 'wp_charmap', {

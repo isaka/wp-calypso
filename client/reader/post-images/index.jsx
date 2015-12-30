@@ -1,7 +1,9 @@
 /**
  * External dependencies
  */
-var React = require( 'react/addons' ),
+var ReactDom = require( 'react-dom' ),
+	React = require( 'react' ),
+	PureRenderMixin = require( 'react-pure-render/mixin' ),
 	resizeImageUrl = require( 'lib/resize-image-url' ),
 	classes = require( 'component-classes' ),
 	domScrollIntoView = require( 'dom-scroll-into-view' ),
@@ -71,8 +73,8 @@ var PostImages = React.createClass( {
 		this.setState( {
 			visibleIndex: nextIndex
 		} );
-		let container = React.findDOMNode( this._fullListContainer );
-		let images = React.findDOMNode( this._fullList ).children;
+		let container = ReactDom.findDOMNode( this._fullListContainer );
+		let images = ReactDom.findDOMNode( this._fullList ).children;
 		domScrollIntoView( images[ nextIndex ], container, { alignWithLeft: true } );
 	},
 
@@ -162,7 +164,7 @@ var PostImages = React.createClass( {
 
 var PostImageThumbList = React.createClass( {
 
-	mixins: [ React.addons.PureRenderMixin ],
+	mixins: [ PureRenderMixin ],
 
 	render: function() {
 		var images = this.props.postImages,

@@ -1,13 +1,16 @@
 /**
  * Module dependencies.
  */
-var debug = require( 'debug' )( 'calypso:wpcom-undocumented:me' );
+import Me from 'wpcom-unpublished/dist/lib/me';
+import inherits from 'inherits';
+import debugFactory from 'debug';
+const debug = debugFactory( 'calypso:wpcom-undocumented:me' );
 
 /**
  * Create an UndocumentedMe instance
  *
- * @param {WPCOM} wpcom
- * @api public
+ * @param {WPCOM} wpcom - WPCOMUndocumented instance
+ * @return {NUll} null
  */
 function UndocumentedMe( wpcom ) {
 	debug( 'UndocumentedMe' );
@@ -16,6 +19,11 @@ function UndocumentedMe( wpcom ) {
 	}
 	this.wpcom = wpcom;
 }
+
+/**
+ * Inherits from Me class
+ */
+inherits( UndocumentedMe, Me );
 
 UndocumentedMe.prototype.billingHistory = function( callback ) {
 	return this.wpcom.req.get( '/me/billing-history', callback );
@@ -31,23 +39,6 @@ UndocumentedMe.prototype.billingHistoryEmailReceipt = function( receiptId, callb
 
 UndocumentedMe.prototype.purchases = function( callback ) {
 	return this.wpcom.req.get( '/me/purchases', callback );
-};
-
-UndocumentedMe.prototype.settings = function( callback ) {
-	return this.wpcom.req.get( {
-		apiVersion: '1.1',
-		path: '/me/settings'
-	}, callback );
-};
-
-UndocumentedMe.prototype.saveSettings = function( settings, callback ) {
-	var args = {
-		apiVersion: '1.1',
-		path: '/me/settings',
-		body: settings
-	};
-
-	return this.wpcom.req.post( args, callback );
 };
 
 UndocumentedMe.prototype.getConnectedApplications = function( callback ) {
@@ -181,6 +172,15 @@ UndocumentedMe.prototype.storedCardDelete = function( card, callback ) {
 	var args = {
 		path: '/me/stored-cards/' + card.stored_details_id + '/delete',
 	};
+	return this.wpcom.req.post( args, callback );
+};
+
+UndocumentedMe.prototype.backupCodes = function( callback ) {
+	var args = {
+		apiVersion: '1.1',
+		path: '/me/two-step/backup-codes/new'
+	};
+
 	return this.wpcom.req.post( args, callback );
 };
 

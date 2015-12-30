@@ -5,7 +5,8 @@ var React = require( 'react' ),
 	config = require( 'config' ),
 	debug = require( 'debug' )( 'calypso:notifications' ),
 	assign = require( 'lodash/object/assign' ),
-	classes = require( 'component-classes' );
+	classes = require( 'component-classes' ),
+	oAuthToken = require( 'lib/oauth-token' );
 
 /**
  * Internal dependencies
@@ -69,7 +70,7 @@ var Notifications = React.createClass({
 		var frameNode;
 		if ( this.props.visible && ! prevProps.visible ) {
 			// showing the panel, focus so we can use shortcuts
-			frameNode = this.refs.widgetFrame.getDOMNode();
+			frameNode = this.refs.widgetFrame;
 			if ( frameNode ) {
 				frameNode.contentWindow.focus();
 			}
@@ -123,6 +124,19 @@ var Notifications = React.createClass({
 		} );
 	},
 
+	postAuth: function() {
+		if ( config.isEnabled( 'oauth' ) ) {
+			const token = oAuthToken.getToken();
+
+			if ( token !== false ) {
+				this.postMessage( {
+					action: 'setAuthToken',
+					token: token
+				} );
+			}
+		}
+	},
+
 	receiveMessage: function(event) {
 		// Receives messages from the notifications widget
 		if ( event.origin !== widgetDomain ) {
@@ -147,6 +161,10 @@ var Notifications = React.createClass({
 			// the iframe is loaded, send any pending messages
 			this.setState( { 'iframeLoaded' : true } );
 			debug( 'notifications iframe loaded' );
+
+			// We always want this to happen, in addition to whatever may be queued
+			this.postAuth();
+
 			if ( this.queuedMessage ) {
 				this.postMessage( this.queuedMessage );
 				this.queuedMessage = null;
@@ -167,7 +185,7 @@ var Notifications = React.createClass({
 		iframeMessage = assign( {}, iframeMessage, message );
 
 		if ( this.refs.widgetFrame && this.state.iframeLoaded ) {
-			var widgetWindow = this.refs.widgetFrame.getDOMNode().contentWindow;
+			var widgetWindow = this.refs.widgetFrame.contentWindow;
 			widgetWindow.postMessage( JSON.stringify( iframeMessage ), widgetDomain );
 		} else {
 			// save only the latest message to send when iframe is loaded

@@ -1,7 +1,9 @@
 /**
  * External Dependencies
  */
-var React = require( 'react/addons' ),
+var ReactDom = require( 'react-dom' ),
+	React = require( 'react' ),
+	PureRenderMixin = require( 'react-pure-render/mixin' ),
 	assign = require( 'lodash/object/assign' ),
 	classes = require( 'component-classes' ),
 	debug = require( 'debug' )( 'calypso:reader-full-post' ), //eslint-disable-line no-unused-vars
@@ -17,6 +19,7 @@ var analytics = require( 'analytics' ),
 	CommentStore = require( 'lib/comment-store/comment-store' ),
 	Dialog = require( 'components/dialog' ),
 	DISPLAY_TYPES = require( 'lib/feed-post-store/display-types' ),
+	ExternalLink = require( 'components/external-link' ),
 	LikeButton = require( 'reader/like-button' ),
 	PostByline = require( 'reader/post-byline' ),
 	PostCommentHelper = require( 'reader/comments/helper' ),
@@ -83,7 +86,7 @@ function readerPageView( blogId, blogUrl, postId, isPrivate ) {
  */
 FullPostView = React.createClass( {
 
-	mixins: [ React.addons.PureRenderMixin ],
+	mixins: [ PureRenderMixin ],
 
 	componentDidMount: function() {
 		this._parseEmoji();
@@ -97,7 +100,7 @@ FullPostView = React.createClass( {
 		if ( ! this.isMounted() ) {
 			return;
 		}
-		let commentListNode = React.findDOMNode( this.refs.commentList );
+		let commentListNode = ReactDom.findDOMNode( this.refs.commentList );
 		if ( commentListNode ) {
 			commentListNode.scrollIntoView( { behavior: 'smooth' } );
 		}
@@ -161,9 +164,9 @@ FullPostView = React.createClass( {
 							<img src={ this.props.post.canonical_image.uri } height={ this.props.post.canonical_image.height } width={ this.props.post.canonical_image.width } />
 						</div> : null }
 
-					{ post.title ? <h1 className="reader__post-title" onClick={ this.handlePermalinkClick }><a className="reader__post-title-link" href={ post.URL } target="_blank">{ post.title }</a></h1> : null }
+					{ post.title ? <h1 className="reader__post-title" onClick={ this.handlePermalinkClick }><ExternalLink className="reader__post-title-link" href={ post.URL } target="_blank" icon={ false }>{ post.title }</ExternalLink></h1> : null }
 
-					<PostByline post={ post } site={ site } />
+					<PostByline post={ post } site={ site } icon={ true }/>
 
 					<div className="reader__full-post-content" dangerouslySetInnerHTML={{ __html: postContent }}></div>
 
@@ -183,7 +186,7 @@ FullPostView = React.createClass( {
 	},
 
 	_parseEmoji: function() {
-		twemoji.parse( React.findDOMNode( this.refs.article ) );
+		twemoji.parse( ReactDom.findDOMNode( this.refs.article ) );
 	}
 
 } );
@@ -201,7 +204,7 @@ FullPostView = React.createClass( {
  */
 FullPostDialog = React.createClass( {
 
-	mixins: [ React.addons.PureRenderMixin ],
+	mixins: [ PureRenderMixin ],
 
 	componentWillMount: function() {
 		classes( document.documentElement ).add( 'detail-page-active' );
@@ -235,6 +238,10 @@ FullPostDialog = React.createClass( {
 		stats.recordAction( 'modal_close' );
 		stats.recordGaEvent( 'Closed Full Post Dialog', action || 'backdrop' );
 		this.props.onClose( action );
+	},
+
+	handleClickOutside: function( event ) {
+		event.preventDefault();
 	},
 
 	render: function() {
@@ -293,6 +300,7 @@ FullPostDialog = React.createClass( {
 				buttons={ buttons }
 				baseClassName="detail-page"
 				onClose={ this.handleClose }
+				onClickOutside= { this.handleClickOutside}
 				onClosed={ this.props.onClosed } >
 				<FullPostView
 					ref="fullPost"
@@ -324,7 +332,7 @@ function getSite( siteId ) {
 
 FullPostContainer = React.createClass( {
 
-	mixins: [ React.addons.PureRenderMixin ],
+	mixins: [ PureRenderMixin ],
 
 	getInitialState: function() {
 		return assign( { isVisible: false }, this.getStateFromStores() );
@@ -378,6 +386,8 @@ FullPostContainer = React.createClass( {
 			readerPageView( site.get( 'ID' ), site.get( 'URL' ), post.ID, site.get( 'is_private' ) );
 			this.hasSentPageView = true;
 		}
+
+		analytics.tracks.recordEvent( 'calypso_reader_article_opened' );
 	},
 
 	// Add change listeners to stores

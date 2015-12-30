@@ -1,7 +1,10 @@
 /**
  * External dependencies
  */
-var React = require( 'react/addons' ),
+var ReactDom = require( 'react-dom' ),
+	React = require( 'react/addons' ),
+	without = require( 'lodash/array/without' ),
+	includes = require( 'lodash/collection/includes' ),
 	classNames = require( 'classnames' ),
 	noop = require( 'lodash/utility/noop' );
 
@@ -39,29 +42,78 @@ module.exports = React.createClass( {
 	},
 
 	componentDidMount: function() {
-		this.dragEnteredCounter = 0;
+		this.dragEnterNodes = [];
 
 		window.addEventListener( 'dragover', this.preventDefault );
 		window.addEventListener( 'drop', this.onDrop );
 		window.addEventListener( 'dragenter', this.toggleDraggingOverDocument );
 		window.addEventListener( 'dragleave', this.toggleDraggingOverDocument );
+		window.addEventListener( 'mouseup', this.resetDragState );
+	},
+
+	componentDidUpdate: function( prevProps, prevState ) {
+		if ( prevState.isDraggingOverDocument !== this.state.isDraggingOverDocument ) {
+			this.toggleMutationObserver();
+		}
 	},
 
 	componentWillUnmount: function() {
-		delete this.dragEnteredCounter;
-
 		window.removeEventListener( 'dragover', this.preventDefault );
 		window.removeEventListener( 'drop', this.onDrop );
 		window.removeEventListener( 'dragenter', this.toggleDraggingOverDocument );
 		window.removeEventListener( 'dragleave', this.toggleDraggingOverDocument );
+		window.removeEventListener( 'mouseup', this.resetDragState );
+		this.disconnectMutationObserver();
+	},
+
+	resetDragState: function() {
+		if ( ! ( this.state.isDraggingOverDocument || this.state.isDraggingOverElement ) ) {
+			return;
+		}
+
+		this.setState( this.getInitialState() );
+	},
+
+	toggleMutationObserver: function() {
+		this.disconnectMutationObserver();
+
+		if ( this.state.isDraggingOverDocument ) {
+			this.observer = new window.MutationObserver( this.detectNodeRemoval );
+			this.observer.observe( document.body, {
+				childList: true,
+				subtree: true
+			} );
+		}
+	},
+
+	disconnectMutationObserver: function() {
+		if ( ! this.observer ) {
+			return;
+		}
+
+		this.observer.disconnect();
+		delete this.observer;
+	},
+
+	detectNodeRemoval: function( mutations ) {
+		mutations.forEach( ( mutation ) => {
+			if ( ! mutation.removedNodes.length ) {
+				return;
+			}
+
+			this.dragEnterNodes = without( this.dragEnterNodes, Array.from( mutation.removedNodes ) );
+		} );
 	},
 
 	toggleDraggingOverDocument: function( event ) {
 		var isDraggingOverDocument, detail, isValidDrag;
 
-		switch ( event.type ) {
-			case 'dragenter': this.dragEnteredCounter++; break;
-			case 'dragleave': this.dragEnteredCounter--; break;
+		// Track nodes that have received a drag event. So long as nodes exist
+		// in the set, we can assume that an item is being dragged on the page.
+		if ( 'dragenter' === event.type && ! includes( this.dragEnterNodes, event.target ) ) {
+			this.dragEnterNodes.push( event.target );
+		} else if ( 'dragleave' === event.type ) {
+			this.dragEnterNodes = without( this.dragEnterNodes, event.target );
 		}
 
 		// In some contexts, it may be necessary to capture and redirect the
@@ -73,7 +125,7 @@ module.exports = React.createClass( {
 		detail = window.CustomEvent && event instanceof window.CustomEvent ? event.detail : event;
 
 		isValidDrag = this.props.onVerifyValidTransfer( detail.dataTransfer );
-		isDraggingOverDocument = isValidDrag && 0 !== this.dragEnteredCounter;
+		isDraggingOverDocument = isValidDrag && this.dragEnterNodes.length;
 
 		this.setState( {
 			isDraggingOverDocument: isDraggingOverDocument,
@@ -82,10 +134,9 @@ module.exports = React.createClass( {
 		} );
 
 		if ( window.CustomEvent && event instanceof window.CustomEvent ) {
-			// For redirected CustomEvent instances, immediately decrement the
-			// counter following the state update, since another "real" event
-			// will be triggered on the `window` object immediately following.
-			this.dragEnteredCounter--;
+			// For redirected CustomEvent instances, immediately remove window
+			// from tracked nodes since another "real" event will be triggered.
+			this.dragEnterNodes = without( this.dragEnterNodes, window );
 		}
 	},
 
@@ -100,7 +151,12 @@ module.exports = React.createClass( {
 			return false;
 		}
 
-		rect = this.refs.zone.getDOMNode().getBoundingClientRect();
+		rect = this.refs.zone.getBoundingClientRect();
+
+		/// make sure the rect is a valid rect
+		if ( rect.bottom === rect.top || rect.left === rect.right ) {
+			return false;
+		}
 
 		return x >= rect.left && x <= rect.right &&
 			y >= rect.top && y <= rect.bottom;
@@ -116,7 +172,7 @@ module.exports = React.createClass( {
 			isDraggingOverElement: false
 		} );
 
-		if ( ! this.props.fullScreen && ! React.findDOMNode( this.refs.zone ).contains( event.target ) ) {
+		if ( ! this.props.fullScreen && ! ReactDom.findDOMNode( this.refs.zone ).contains( event.target ) ) {
 			return;
 		}
 

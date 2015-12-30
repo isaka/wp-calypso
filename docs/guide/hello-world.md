@@ -8,7 +8,7 @@ Load [http://calypso.localhost:3000](http://calypso.localhost:3000/) in your bro
 
 ## Adding a new section
 
-Sections are usually bigger areas of the appliction that have their own chunk of code, loaded asyncronously when its URLs is hit.
+Sections are usually bigger areas of the application that have their own chunk of code, loaded asyncronously when its URLs is hit.
 
 Creating a new section is composed of five steps:
 
@@ -114,7 +114,7 @@ Restart the server doing:
 
 * `make run`
 
-We are ready to load http://calypso.localhost:3000/hello-world! Your console should respond with `Hello, world?` if everything is working and you should see Calypso's sidebar for "My Sites".
+We are ready to load [http://calypso.localhost:3000/hello-world](http://calypso.localhost:3000/hello-world)! Your console should respond with `Hello, world?` if everything is working and you should see Calypso's sidebar for "My Sites".
 
 ----
 
@@ -174,7 +174,7 @@ helloWorld() {
 	const Main = require( 'my-sites/hello-world/main' );
 
 	// Render hello world...
-	React.render(
+	ReactDom.render(
 		React.createElement( Main ),
 		document.getElementById( 'primary' )
 	);

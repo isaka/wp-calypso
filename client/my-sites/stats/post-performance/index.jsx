@@ -1,7 +1,7 @@
 /**
  * External dependencies
  */
-var React = require( 'react/addons' ),
+var React = require( 'react' ),
 	debug = require( 'debug' )( 'calypso:stats:postPerformance' ),
 	classNames = require( 'classnames' );
 
@@ -9,7 +9,7 @@ var React = require( 'react/addons' ),
  * Internal dependencies
  */
 var Card = require( 'components/card' ),
-	PostListStore = require( 'lib/posts/post-list-store' ),
+	PostListStore = require( 'lib/posts/post-list-store-factory' )(),
 	PostStatsStore = require( 'lib/post-stats/store' ),
 	Emojify = require( 'components/emojify' ),
 	actions = require( 'lib/posts/actions' ),

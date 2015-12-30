@@ -18,12 +18,17 @@ module.exports = React.createClass( {
 	displayName: 'PluginAutopdateToggle',
 
 	propTypes: {
+		isMock: React.PropTypes.bool,
 		site: React.PropTypes.object.isRequired,
 		plugin: React.PropTypes.object.isRequired,
 		wporg: React.PropTypes.bool
 	},
 
 	toggleAutoupdates: function() {
+		if ( this.props.isMock || this.props.disabled ) {
+			return;
+		}
+
 		PluginsActions.togglePluginAutoUpdate( this.props.site, this.props.plugin );
 		PluginsActions.removePluginsNotices( this.props.notices.completed.concat( this.props.notices.errors ) );
 
@@ -63,14 +68,14 @@ module.exports = React.createClass( {
 			} );
 		}
 
-		if ( this.props.site.options.unmapped_url !== this.props.site.options.main_network_site ) {
+		if ( ! utils.isMainNetworkSite( this.props.site ) ) {
 			return this.translate( 'Only the main site on a multi-site installation can enable autoupdates for plugins.', {
 				args: { site: this.props.site.title }
 			} );
 		}
 
-		if ( ! this.props.site.canUpdateFiles && this.props.site.options.file_mod_disabled ) {
-			let reasons = utils.getSiteFileModDisableReason( this.props.site );
+		if ( ! this.props.site.canAutoupdateFiles && this.props.site.options.file_mod_disabled ) {
+			let reasons = utils.getSiteFileModDisableReason( this.props.site, 'autoupdateFiles' );
 			let html = [];
 
 			if ( reasons.length > 1 ) {
@@ -107,6 +112,10 @@ module.exports = React.createClass( {
 	},
 
 	render: function() {
+		if ( ! this.props.site.jetpack ) {
+			return null;
+		}
+
 		const inProgress = PluginsLog.isInProgressAction( this.props.site.ID, this.props.plugin.slug, [
 				'ENABLE_AUTOUPDATE_PLUGIN',
 				'DISABLE_AUTOUPDATE_PLUGIN'
@@ -122,6 +131,7 @@ module.exports = React.createClass( {
 
 		return (
 			<PluginAction
+				disabled={ this.props.disabled }
 				label={ label }
 				status={ this.props.plugin.autoupdate }
 				action={ this.toggleAutoupdates }

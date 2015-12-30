@@ -1,17 +1,19 @@
 /**
  * External dependencies
  */
-var React = require( 'react' ),
-	classNames = require( 'classnames' ),
-	debounce = require( 'lodash/function/debounce' ),
-	noop = () => {};
+import ReactDom from 'react-dom';
+import React from 'react';
+import classNames from 'classnames';
+import debounce from 'lodash/function/debounce';
+import noop from 'lodash/utility/noop';
 
 /**
  * Internal dependencies
  */
-var analytics = require( 'analytics' ),
-	Spinner = require( 'components/spinner' );
-
+import analytics from 'analytics';
+import Spinner from 'components/spinner';
+import Gridicon from 'components/gridicon';
+import { isMobile } from 'lib/viewport';
 /**
  * Internal variables
  */
@@ -28,6 +30,7 @@ module.exports = React.createClass( {
 		placeholder: React.PropTypes.string,
 		pinned: React.PropTypes.bool,
 		delaySearch: React.PropTypes.bool,
+		delayTimeout: React.PropTypes.number,
 		onSearch: React.PropTypes.func.isRequired,
 		onSearchChange: React.PropTypes.func,
 		onSearchClose: React.PropTypes.func,
@@ -37,12 +40,14 @@ module.exports = React.createClass( {
 		onKeyDown: React.PropTypes.func,
 		disableAutocorrect: React.PropTypes.bool,
 		onBlur: React.PropTypes.func,
-		searching: React.PropTypes.bool
+		searching: React.PropTypes.bool,
+		isOpen: React.PropTypes.bool
 	},
 
 	getInitialState: function() {
 		return {
-			keyword: this.props.initialValue || ''
+			keyword: this.props.initialValue || '',
+			isOpen: !! this.props.isOpen
 		};
 	},
 
@@ -50,13 +55,15 @@ module.exports = React.createClass( {
 		return {
 			pinned: false,
 			delaySearch: false,
+			delayTimeout: SEARCH_DEBOUNCE_MS,
 			autoFocus: false,
 			disabled: false,
 			onSearchChange: noop,
 			onSearchClose: noop,
 			onKeyDown: noop,
 			disableAutocorrect: false,
-			searching: false
+			searching: false,
+			isOpen: false
 		};
 	},
 
@@ -64,7 +71,7 @@ module.exports = React.createClass( {
 		this.id = _instance;
 		_instance++;
 		this.onSearch = this.props.delaySearch
-			? debounce( this.props.onSearch, SEARCH_DEBOUNCE_MS )
+			? debounce( this.props.onSearch, this.props.delayTimeout )
 			: this.props.onSearch;
 	},
 
@@ -74,27 +81,25 @@ module.exports = React.createClass( {
 			nextProps.delaySearch !== this.props.delaySearch
 		) {
 			this.onSearch = this.props.delaySearch
-				? debounce( this.props.onSearch, SEARCH_DEBOUNCE_MS )
+				? debounce( this.props.onSearch, this.props.delayTimeout )
 				: this.props.onSearch;
 		}
 	},
 
 	componentDidUpdate: function( prevProps, prevState ) {
-		// Focus if we aren't disabled and have a value from user, or the
-		// search box was opened, or the autoFocus prop has changed
+		// Focus if the search box was opened or the autoFocus prop has changed
 		if (
-			(
-				! this.props.disabled &&
-				this.state.keyword &&
-				this.state.keyword !== this.props.initialValue
-			) ||
 			( this.state.isOpen && ! prevState.isOpen ) ||
 			( this.props.autoFocus && ! prevProps.autoFocus )
 		) {
 			this.focus();
 		}
 
-		if ( this.state.keyword === prevState.keyword ) {
+		if (
+			this.state.keyword === prevState.keyword &&
+			this.props.initialValue === prevProps.initialValue &&
+			this.props.siteID === prevProps.siteID
+		) {
 			return;
 		}
 		// if there's a keyword change: trigger search
@@ -118,18 +123,21 @@ module.exports = React.createClass( {
 		if ( this.props.autoFocus ) {
 			this.focus();
 		}
+		if ( this.props.initialValue ) {
+			this.onSearch( this.props.initialValue );
+		}
 	},
 
 	focus: function() {
-		React.findDOMNode( this.refs.searchInput ).focus();
+		ReactDom.findDOMNode( this.refs.searchInput ).focus();
 	},
 
 	blur: function() {
-		React.findDOMNode( this.refs.searchInput ).blur();
+		ReactDom.findDOMNode( this.refs.searchInput ).blur();
 	},
 
 	getCurrentSearchValue: function() {
-		return React.findDOMNode( this.refs.searchInput ).value;
+		return ReactDom.findDOMNode( this.refs.searchInput ).value;
 	},
 
 	clear: function() {
@@ -167,18 +175,18 @@ module.exports = React.createClass( {
 			return;
 		}
 
-		input = React.findDOMNode( this.refs.searchInput );
+		input = ReactDom.findDOMNode( this.refs.searchInput );
 
 		this.setState( {
 			keyword: '',
-			isOpen: false
+			isOpen: this.props.isOpen || false
 		} );
 
 		input.value = ''; // will not trigger onChange
 		input.blur();
 
 		if ( this.props.pinned ) {
-			React.findDOMNode( this.refs.openIcon ).focus();
+			ReactDom.findDOMNode( this.refs.openIcon ).focus();
 		}
 
 		this.props.onSearchClose();
@@ -187,6 +195,11 @@ module.exports = React.createClass( {
 	},
 
 	keyUp: function( event ) {
+		if ( event.which === 13 && isMobile() ) {
+			//dismiss soft keyboards
+			this.blur();
+		}
+
 		if ( ! this.props.pinned ) {
 			return;
 		}
@@ -203,7 +216,7 @@ module.exports = React.createClass( {
 	// Puts the cursor at end of the text when starting
 	// with `initialValue` set.
 	onFocus: function() {
-		var input = React.findDOMNode( this.refs.searchInput ),
+		var input = ReactDom.findDOMNode( this.refs.searchInput ),
 			setValue = input.value;
 
 		if ( setValue ) {
@@ -243,7 +256,6 @@ module.exports = React.createClass( {
 				<Spinner />
 				<div
 					ref="openIcon"
-					className="noticon noticon-search"
 					onTouchTap={ enableOpenIcon ? this.openSearch : this.focus }
 					tabIndex={ enableOpenIcon ? '0' : null }
 					onKeyDown={ enableOpenIcon
@@ -251,7 +263,9 @@ module.exports = React.createClass( {
 						: null
 					}
 					aria-controls={ 'search-component-' + this.id }
-					aria-label={ this.translate( 'Open Search', { context: 'button label' } ) }/>
+					aria-label={ this.translate( 'Open Search', { context: 'button label' } ) }>
+				<Gridicon icon="search" className="search-open__icon"/>
+				</div>
 				<input
 					type="search"
 					id={ 'search-component-' + this.id }
@@ -277,12 +291,13 @@ module.exports = React.createClass( {
 	closeButton: function() {
 		return (
 			<span
-				className="noticon noticon-close-alt"
 				onTouchTap={ this.closeSearch }
 				tabIndex="0"
 				onKeyDown={ this._keyListener.bind( this, 'closeSearch' ) }
 				aria-controls={ 'search-component-' + this.id }
-				aria-label={ this.translate( 'Close Search', { context: 'button label' } ) }/>
+				aria-label={ this.translate( 'Close Search', { context: 'button label' } ) }>
+			<Gridicon icon="cross" className="search-close__icon"/>
+			</span>
 		);
 	},
 

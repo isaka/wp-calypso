@@ -1,7 +1,7 @@
 /**
  * External dependencies
  */
-var React = require( 'react/addons' ),
+var React = require( 'react' ),
 	debug = require( 'debug' )( 'calypso:my-sites:current-site' ),
 	analytics = require( 'analytics' ),
 	url = require( 'url' );
@@ -10,9 +10,11 @@ var React = require( 'react/addons' ),
  * Internal dependencies
  */
 var AllSites = require( 'my-sites/all-sites' ),
+	analytics = require( 'analytics' ),
 	AddNewButton = require( 'components/add-new-button' ),
 	Card = require( 'components/card' ),
-	SiteNotice = require( 'notices/site-notice' ),
+	Notice = require( 'components/notice' ),
+	NoticeAction = require( 'components/notice/notice-action' ),
 	layoutFocus = require( 'lib/layout-focus' ),
 	Site = require( 'my-sites/site' ),
 	Gridicon = require( 'components/gridicon' ),
@@ -98,17 +100,22 @@ module.exports = React.createClass( {
 		}
 
 		return (
-			<SiteNotice status="is-info">
-				{ this.translate( 'The site redirects to {{a}}%(url)s{{/a}}', {
+			<Notice
+				showDismiss={ false }
+				isCompact={ true }
+				text={ this.translate( 'Redirects to {{a}}%(url)s{{/a}}', {
 					args: { url: hostname },
-					components: { a: <a href={ href }/> }
-				} ) }
-			</SiteNotice>
+					components: { a: <a href={ site.URL }/> }
+				} ) }>
+				<NoticeAction href={ href }>
+					{ this.translate( 'Edit' ) }
+				</NoticeAction>
+			</Notice>
 		);
 	},
 
 	getDomainExpirationNotices: function() {
-		let domainStore = this.state.domainsStore.getForSite( this.getSelectedSite().ID ),
+		let domainStore = this.state.domainsStore.getBySite( this.getSelectedSite().ID ),
 			domains = domainStore && domainStore.list || [];
 		return (
 			<DomainWarnings
@@ -143,6 +150,10 @@ module.exports = React.createClass( {
 		);
 	},
 
+	trackHomepageClick: function() {
+		analytics.ga.recordEvent( 'Sidebar', 'Clicked View Site' );
+	},
+
 	render: function() {
 		var site,
 			hasOneSite = this.props.siteCount === 1;
@@ -150,11 +161,11 @@ module.exports = React.createClass( {
 		if ( ! this.props.sites.initialized ) {
 			return (
 				<Card className="current-site is-loading">
-					<div className="site">
 					{ hasOneSite
 						? this.addNewWordPressButton()
-						: <span className="current-site__switch-sites" />
+						: <span className="current-site__switch-sites">&nbsp;</span>
 					}
+					<div className="site">
 						<a className="site__content">
 							<div className="site-icon" />
 							<div className="site__info">
@@ -183,7 +194,14 @@ module.exports = React.createClass( {
 							{ this.translate( 'Switch Site' ) }
 						</span>
 				}
-				{ this.props.sites.selected ? <Site site={ site }/> : <AllSites sites={ this.props.sites }/> }
+				{ this.props.sites.selected
+					? <Site
+						site={ site }
+						homeLink={ true }
+						externalLink={ true }
+						onSelect={ this.trackHomepageClick } />
+					: <AllSites sites={ this.props.sites } />
+				}
 				{ this.getSiteNotices( site ) }
 			</Card>
 		);

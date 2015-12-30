@@ -15,7 +15,8 @@ var productsList = require( 'lib/products-list' )(),
 	PlanList = require( 'components/plans/plan-list' ),
 	PlansCompare = require( 'components/plans/plans-compare' ),
 	SignupActions = require( 'lib/signup/actions' ),
-	StepWrapper = require( 'signup/step-wrapper' );
+	StepWrapper = require( 'signup/step-wrapper' ),
+	Gridicon = require( 'components/gridicon' );
 
 module.exports = React.createClass( {
 	displayName: 'PlansStep',
@@ -85,13 +86,15 @@ module.exports = React.createClass( {
 				<PlanList
 					plans={ this.state.plans }
 					comparePlansUrl={ this.comparePlansUrl() }
+					enableFreeTrials={ 'free-trial' === this.props.flowName }
 					isInSignup={ true }
 					onSelectPlan={ this.onSelectPlan } />
 				<a
 					href={ this.comparePlansUrl() }
 					className='plans-step__compare-plans-link'
 					onClick={ this.handleComparePlansLinkClick.bind( null, 'footer' ) }>
-					{ this.translate( 'Compare Plans' ) }
+						<Gridicon icon="clipboard" size={ 18 } />
+						{ this.translate( 'Compare Plans' ) }
 				</a>
 			</div>
 		);

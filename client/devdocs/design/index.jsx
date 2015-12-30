@@ -11,8 +11,7 @@ var React = require( 'react' ),
  */
 var SearchCard = require( 'components/search-card' ),
 	SearchDemo = require( 'components/search/docs/example' ),
-	Typography = require( 'components/typography/docs/example' ),
-	Notices = require( 'components/notices/docs/example' ),
+	Notices = require( 'components/notice/docs/example' ),
 	Buttons = require( 'components/button/docs/example' ),
 	ButtonGroups = require( 'components/button-group/docs/example' ),
 	AddNewButtons = require( 'components/add-new-button/docs/example' ),
@@ -25,6 +24,7 @@ var SearchCard = require( 'components/search-card' ),
 	SegmentedControl = require( 'components/segmented-control/docs/example' ),
 	Cards = require( 'components/card/docs/example' ),
 	Sites = require( 'lib/sites-list/docs/example' ),
+	SitesDropdown = require( 'components/sites-dropdown/docs/example' ),
 	TokenFields = require( 'components/token-field/docs/example' ),
 	CountedTextareas = require( 'components/forms/counted-textarea/docs/example' ),
 	ProgressBar = require( 'components/progress-bar/docs/example' ),
@@ -43,16 +43,17 @@ var SearchCard = require( 'components/search-card' ),
 	InputChrono = require( 'components/input-chrono/docs/example' ),
 	TimezoneDropdown = require( 'components/timezone-dropdown/docs/example' ),
 	ClipboardButtons = require( 'components/forms/clipboard-button/docs/example' ),
+	ClipboardButtonInput = require( 'components/clipboard-button-input/docs/example' ),
 	HeaderCake = require( 'components/header-cake' ),
 	InfoPopover = require( 'components/info-popover/docs/example' ),
 	FoldableCard = require( 'components/foldable-card/docs/example' ),
 	SectionHeader = require( 'components/section-header/docs/example' ),
-	Flag = require( 'components/flag/docs/example' ),
 	PaymentLogo = require( 'components/payment-logo/docs/example' ),
 	Count = require( 'components/count/docs/example' ),
 	Version = require( 'components/version/docs/example' ),
 	BulkSelect = require( 'components/bulk-select/docs/example' ),
 	ExternalLink = require( 'components/external-link/docs/example' ),
+	FeatureGate = require( 'components/feature-example/docs/example' ),
 	Collection,
 	FilterSummary,
 	Hider;
@@ -177,7 +178,6 @@ module.exports = React.createClass( {
 					</SearchCard>
 				}
 				<Collection component={ this.props.component } filter={ this.state.filter }>
-					<Typography />
 					<Notices />
 					<Buttons />
 					<ButtonGroups />
@@ -191,6 +191,7 @@ module.exports = React.createClass( {
 					<SegmentedControl />
 					<Cards />
 					<Sites />
+					<SitesDropdown />
 					<TokenFields />
 					<CountedTextareas />
 					<ProgressBar />
@@ -203,10 +204,12 @@ module.exports = React.createClass( {
 					<DropZones />
 					<FormFields searchKeywords="input textbox textarea radio"/>
 					<ClipboardButtons />
+					<ClipboardButtonInput />
 					<Rating />
 					<Count />
 					<Version />
 					<ExternalLink />
+					<FeatureGate />
 					<DatePicker />
 					<Spinners />
 					<Theme />
@@ -214,7 +217,6 @@ module.exports = React.createClass( {
 					<InputChrono />
 					<TimezoneDropdown />
 					<FoldableCard />
-					<Flag />
 					<PaymentLogo />
 					<BulkSelect />
 					<SectionHeader />

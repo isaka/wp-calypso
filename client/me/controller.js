@@ -1,6 +1,7 @@
 /**
  * External dependencies
  */
+import ReactDom from 'react-dom';
 import React from 'react';
 import includes from 'lodash/collection/includes';
 import page from 'page';
@@ -18,6 +19,8 @@ import purchasesController from './purchases/controller';
 import userFactory from 'lib/user';
 import userSettings from 'lib/user-settings';
 import titleActions from 'lib/screen-title/actions';
+import { renderWithReduxStore } from 'lib/react-helpers';
+import { setSection } from 'state/ui/actions';
 
 const ANALYTICS_PAGE_TITLE = 'Me',
 	devices = devicesFactory(),
@@ -28,15 +31,16 @@ export default {
 	sidebar( context, next ) {
 		const SidebarComponent = require( 'me/sidebar' );
 
-		React.render(
+		renderWithReduxStore(
 			React.createElement( SidebarComponent, {
 				user,
 				context: context
 			} ),
-			document.getElementById( 'secondary' )
+			document.getElementById( 'secondary' ),
+			context.store
 		);
 
-		context.layout.setState( { section: 'me' } );
+		context.store.dispatch( setSection( 'me' ) );
 
 		next();
 	},
@@ -49,14 +53,15 @@ export default {
 
 		analytics.pageView.record( basePath, ANALYTICS_PAGE_TITLE + ' > My Profile' );
 
-		React.render(
+		renderWithReduxStore(
 			React.createElement( ProfileComponent,
 				{
 					userSettings: userSettings,
 					path: context.path
 				}
 			),
-			document.getElementById( 'primary' )
+			document.getElementById( 'primary' ),
+			context.store
 		);
 	},
 
@@ -79,7 +84,7 @@ export default {
 			analytics.pageView.record( basePath, ANALYTICS_PAGE_TITLE + ' > Account Settings' );
 		}
 
-		React.render(
+		renderWithReduxStore(
 			React.createElement( AccountComponent,
 				{
 					userSettings: userSettings,
@@ -88,7 +93,8 @@ export default {
 					showNoticeInitially: showNoticeInitially
 				}
 			),
-			document.getElementById( 'primary' )
+			document.getElementById( 'primary' ),
+			context.store
 		);
 	},
 
@@ -107,7 +113,7 @@ export default {
 
 		analytics.pageView.record( basePath, ANALYTICS_PAGE_TITLE + ' > Password' );
 
-		React.render(
+		renderWithReduxStore(
 			React.createElement( PasswordComponent,
 				{
 					userSettings: userSettings,
@@ -115,7 +121,8 @@ export default {
 					accountPasswordData: accountPasswordData
 				}
 			),
-			document.getElementById( 'primary' )
+			document.getElementById( 'primary' ),
+			context.store
 		);
 	},
 
@@ -128,7 +135,7 @@ export default {
 
 		analytics.pageView.record( basePath, ANALYTICS_PAGE_TITLE + ' > Two-Step Authentication' );
 
-		React.render(
+		renderWithReduxStore(
 			React.createElement( TwoStepComponent,
 				{
 					userSettings: userSettings,
@@ -136,7 +143,8 @@ export default {
 					appPasswordsData: appPasswordsData
 				}
 			),
-			document.getElementById( 'primary' )
+			document.getElementById( 'primary' ),
+			context.store
 		);
 	},
 
@@ -149,7 +157,7 @@ export default {
 
 		analytics.pageView.record( basePath, ANALYTICS_PAGE_TITLE + ' > Connected Applications' );
 
-		React.render(
+		renderWithReduxStore(
 			React.createElement( ConnectedAppsComponent,
 				{
 					userSettings: userSettings,
@@ -157,7 +165,8 @@ export default {
 					connectedAppsData: connectedAppsData
 				}
 			),
-			document.getElementById( 'primary' )
+			document.getElementById( 'primary' ),
+			context.store
 		);
 	},
 
@@ -169,14 +178,15 @@ export default {
 
 		analytics.pageView.record( basePath, ANALYTICS_PAGE_TITLE + ' > Security Checkup' );
 
-		React.render(
+		renderWithReduxStore(
 			React.createElement( CheckupComponent,
 				{
 					userSettings: userSettings,
 					path: context.path
 				}
 			),
-			document.getElementById( 'primary' )
+			document.getElementById( 'primary' ),
+			context.store
 		);
 	},
 
@@ -188,17 +198,16 @@ export default {
 
 		analytics.pageView.record( basePath, ANALYTICS_PAGE_TITLE + ' > Notifications' );
 
-		React.render(
-			React.createElement( NotificationsComponent,
-				{
-					user: user,
-					userSettings: userSettings,
-					blogs: sites,
-					devices: devices,
-					path: context.path
-				}
-			),
-			document.getElementById( 'primary' )
+		renderWithReduxStore(
+			React.createElement( NotificationsComponent, {
+				user: user,
+				userSettings: userSettings,
+				blogs: sites,
+				devices: devices,
+				path: context.path
+			} ),
+			document.getElementById( 'primary' ),
+			context.store
 		);
 	},
 
@@ -210,7 +219,7 @@ export default {
 
 		analytics.pageView.record( basePath, ANALYTICS_PAGE_TITLE + ' > Notifications > Comments on other sites' );
 
-		React.render(
+		renderWithReduxStore(
 			React.createElement( CommentSettingsComponent,
 				{
 					user: user,
@@ -218,7 +227,8 @@ export default {
 					path: context.path
 				}
 			),
-			document.getElementById( 'primary' )
+			document.getElementById( 'primary' ),
+			context.store
 		);
 	},
 
@@ -230,7 +240,7 @@ export default {
 
 		analytics.pageView.record( basePath, ANALYTICS_PAGE_TITLE + ' > Notifications > Updates from WordPress.com' );
 
-		React.render(
+		renderWithReduxStore(
 			React.createElement( WPcomSettingsComponent,
 				{
 					user: user,
@@ -238,7 +248,8 @@ export default {
 					path: context.path
 				}
 			),
-			document.getElementById( 'primary' )
+			document.getElementById( 'primary' ),
+			context.store
 		);
 	},
 
@@ -250,14 +261,15 @@ export default {
 
 		analytics.ga.recordPageView( basePath, ANALYTICS_PAGE_TITLE + ' > Notifications > Comments on other sites' );
 
-		React.render(
+		renderWithReduxStore(
 			React.createElement( NotificationSubscriptions,
 				{
 					userSettings: userSettings,
 					path: context.path
 				}
 			),
-			document.getElementById( 'primary' )
+			document.getElementById( 'primary' ),
+			context.store
 		);
 	},
 
@@ -270,17 +282,19 @@ export default {
 
 		titleActions.setTitle( i18n.translate( 'Billing History', { textOnly: true } ) );
 
-		React.render(
-			React.createElement( BillingHistoryComponent, { billingData: billingData } ),
-			document.getElementById( 'primary' )
+		renderWithReduxStore(
+			React.createElement( BillingHistoryComponent, { billingData: billingData, sites: sites } ),
+			document.getElementById( 'primary' ),
+			context.store
 		);
 
 		if ( transactionId ) {
 			analytics.pageView.record( basePath + '/receipt', ANALYTICS_PAGE_TITLE + ' > Billing History > Receipt' );
 
-			React.render(
+			renderWithReduxStore(
 				React.createElement( ViewReceiptModal, { transaction: billingData.getTransaction( transactionId ) } ),
-				document.getElementById( 'tertiary' )
+				document.getElementById( 'tertiary' ),
+				context.store
 			);
 		} else {
 			analytics.pageView.record( basePath, ANALYTICS_PAGE_TITLE + ' > Billing History' );
@@ -298,20 +312,21 @@ export default {
 		titleActions.setTitle( i18n.translate( 'Next Steps', { textOnly: true } ) );
 
 		if ( isWelcome ) {
-			React.unmountComponentAtNode( document.getElementById( 'secondary' ) );
-			context.layout.setState( { noSidebar: true } );
+			ReactDom.unmountComponentAtNode( document.getElementById( 'secondary' ) );
+			context.store.dispatch( setSection( null, { hasSidebar: false } ) );
 		}
 
 		analytics.tracks.recordEvent( 'calypso_me_next_view', { is_welcome: isWelcome } );
 		analytics.pageView.record( analyticsBasePath, ANALYTICS_PAGE_TITLE + ' > Next' );
 
-		React.render(
+		renderWithReduxStore(
 			React.createElement( NextSteps, {
 				path: context.path,
 				isWelcome: isWelcome,
 				trophiesData: trophiesData
 			} ),
-			document.getElementById( 'primary' )
+			document.getElementById( 'primary' ),
+			context.store
 		);
 	},
 

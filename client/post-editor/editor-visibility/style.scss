@@ -28,6 +28,10 @@
 
 	.form-text-input {
 		font-size: 13px;
+
+		&.is-info-open {
+			margin-top: 8px;
+		}
 	}
 
 	.form-input-validation {
@@ -36,6 +40,10 @@
 
 	.form-setting-explanation {
 		margin: -4px 0 8px 24px;
+
+		&.password {
+			margin-bottom: 0;
+		}
 	}
 
 	.gridicon {
@@ -61,6 +69,6 @@
 .popover {
 	&.editor-visibility__popover {
 		/* applying a lower z-index to ensure it is layered behind the masterbar */
-		z-index: 179;
+		z-index: z-index( 'root', '.popover.editor-visibility__popover' );
 	}
 }

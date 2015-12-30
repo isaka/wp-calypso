@@ -37,7 +37,8 @@ var config = require( 'config' ),
 	touchDetect = require( 'lib/touch-detect' ),
 	accessibleFocus = require( 'lib/accessible-focus' ),
 	TitleStore = require( 'lib/screen-title/store' ),
-	createReduxStore = require( 'lib/create-redux-store' ),
+	createReduxStore = require( 'state' ).createReduxStore,
+	renderWithReduxStore = require( 'lib/react-helpers' ).renderWithReduxStore,
 	// The following mixins require i18n content, so must be required after i18n is initialized
 	Layout,
 	LoggedOutLayout;
@@ -78,16 +79,14 @@ function init() {
 	} );
 }
 
-function setUpContext( layout ) {
-	var reduxStore = createReduxStore();
-
+function setUpContext( layout, reduxStore ) {
 	// Pass the layout so that it is available to all page handlers
 	// and add query and hash objects onto context object
 	page( '*', function( context, next ) {
 		var parsed = url.parse( location.href, true );
 
 		context.layout = layout;
-		context.reduxStore = reduxStore;
+		context.store = reduxStore;
 
 		// Break routing and do full page load for logout link in /me
 		if ( context.pathname === '/wp-login.php' ) {
@@ -138,7 +137,7 @@ function loadDevModulesAndBoot() {
 }
 
 function boot() {
-	var layoutSection, layout, validSections = [];
+	var layoutSection, layout, layoutElement, reduxStore, validSections = [];
 
 	init();
 
@@ -154,6 +153,8 @@ function boot() {
 
 	translatorJumpstart.init();
 
+	reduxStore = createReduxStore();
+
 	if ( user.get() ) {
 		// When logged in the analytics module requires user and superProps objects
 		// Inject these here
@@ -161,25 +162,31 @@ function boot() {
 
 		// Create layout instance with current user prop
 		Layout = require( 'layout' );
-		layout = React.render( React.createElement( Layout, {
+
+		layoutElement = React.createElement( Layout, {
 			user: user,
 			sites: sites,
 			focus: layoutFocus,
 			nuxWelcome: nuxWelcome,
 			translatorInvitation: translatorInvitation
-		} ), document.getElementById( 'wpcom' ) );
+		} );
 	} else {
+		analytics.setSuperProps( superProps );
+
 		if ( config.isEnabled( 'oauth' ) ) {
 			LoggedOutLayout = require( 'layout/logged-out-oauth' );
 		} else {
 			LoggedOutLayout = require( 'layout/logged-out' );
 		}
 
-		layout = React.render(
-			React.createElement( LoggedOutLayout ),
-			document.getElementById( 'wpcom' )
-		);
+		layoutElement = React.createElement( LoggedOutLayout );
 	}
+
+	layout = renderWithReduxStore(
+		layoutElement,
+		document.getElementById( 'wpcom' ),
+		reduxStore
+	);
 
 	debug( 'Main layout rendered.' );
 
@@ -191,8 +198,7 @@ function boot() {
 		window.history.replaceState( null, document.title, window.location.pathname );
 	}
 
-	setUpContext( layout );
-
+	setUpContext( layout, reduxStore );
 	page( '*', require( 'lib/route/normalize' ) );
 
 	// warn against navigating from changed, unsaved forms

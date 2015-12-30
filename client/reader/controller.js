@@ -1,7 +1,8 @@
 /**
  * External Dependencies
  */
-var React = require( 'react' ),
+var ReactDom = require( 'react-dom' ),
+	React = require( 'react' ),
 	page = require( 'page' ),
 	debug = require( 'debug' )( 'calypso:reader:controller' ),
 	trim = require( 'lodash/string/trim' );
@@ -19,7 +20,9 @@ var i18n = require( 'lib/mixins/i18n' ),
 	i18n = require( 'lib/mixins/i18n' ),
 	TitleStore = require( 'lib/screen-title/store' ),
 	titleActions = require( 'lib/screen-title/actions' ),
-	FeedSubscriptionActions = require( 'lib/reader-feed-subscriptions/actions' );
+	setSection = require( 'state/ui/actions' ).setSection,
+	FeedSubscriptionActions = require( 'lib/reader-feed-subscriptions/actions' ),
+	readerRoute = require( 'reader/route' );
 
 // This is a tri-state.
 // null == nothing instantiated, nothing pending
@@ -44,6 +47,7 @@ function trackScrollPage( path, title, category, readerView, pageNum ) {
 	debug( 'scroll [%s], [%s], [%s], [%d]', path, title, category, pageNum );
 
 	analytics.ga.recordEvent( category, 'Loaded Next Page', 'page', pageNum );
+	analytics.tracks.recordEvent( 'calypso_reader_infinite_scroll_performed' );
 	analytics.pageView.record( path, title );
 	analytics.mc.bumpStat( {
 		newdash_pageviews: 'scroll',
@@ -52,7 +56,7 @@ function trackScrollPage( path, title, category, readerView, pageNum ) {
 }
 
 function removeFullPostDialog() {
-	React.unmountComponentAtNode( document.getElementById( 'tertiary' ) );
+	ReactDom.unmountComponentAtNode( document.getElementById( 'tertiary' ) );
 	__fullPostInstance = null;
 }
 
@@ -70,6 +74,21 @@ function pageTitleSetter() {
 }
 
 module.exports = {
+	redirects: function( context, next ) {
+		let redirect;
+		if ( context.params.blog_id ) {
+			redirect = readerRoute.getPrettySiteUrl( context.params.blog_id );
+		} else if ( context.params.feed_id ) {
+			redirect = readerRoute.getPrettyFeedUrl( context.params.feed_id );
+		}
+
+		if ( redirect ) {
+			return page.redirect( redirect );
+		}
+
+		next();
+	},
+
 	loadSubscriptions: function( context, next ) {
 		// these three are included to ensure that the stores required have been loaded and can accept actions
 		const FeedSubscriptionStore = require( 'lib/reader-feed-subscriptions' ), // eslint-disable-line no-unused-vars
@@ -82,9 +101,9 @@ module.exports = {
 	sidebar: function( context, next ) {
 		var ReaderSidebarComponent = require( 'reader/sidebar' );
 
-		context.layout.setState( { section: 'reader' } );
+		context.store.dispatch( setSection( 'reader' ) );
 
-		React.render(
+		ReactDom.render(
 			React.createElement( ReaderSidebarComponent, { path: context.path } ),
 			document.getElementById( 'secondary' )
 		);
@@ -105,7 +124,7 @@ module.exports = {
 
 		pageTitleSetter()( i18n.translate( 'Following' ) );
 
-		React.render(
+		ReactDom.render(
 			React.createElement( FollowingComponent, {
 				key: 'following',
 				listName: i18n.translate( 'Followed Sites' ),
@@ -134,8 +153,9 @@ module.exports = {
 		ensureStoreLoading( feedStore );
 
 		trackPageLoad( basePath, fullAnalyticsPageTitle, mcKey );
+		analytics.tracks.recordEvent( 'calypso_reader_blog_preview' );
 
-		React.render(
+		ReactDom.render(
 			React.createElement( FeedStream, {
 				key: 'feed-' + context.params.feed_id,
 				store: feedStore,
@@ -166,8 +186,9 @@ module.exports = {
 		ensureStoreLoading( feedStore );
 
 		trackPageLoad( basePath, fullAnalyticsPageTitle, mcKey );
+		analytics.tracks.recordEvent( 'calypso_reader_blog_preview' );
 
-		React.render(
+		ReactDom.render(
 			React.createElement( SiteStream, {
 				key: 'site-' + context.params.blog_id,
 				store: feedStore,
@@ -202,7 +223,7 @@ module.exports = {
 		// this will automatically unmount anything that was already mounted
 		// in #tertiary, so we don't have to check the current state of
 		// __fullPostInstance before making another
-		__fullPostInstance = React.render(
+		__fullPostInstance = ReactDom.render(
 			React.createElement( FullPostDialog, {
 				feedId: feedId,
 				postId: postId,
@@ -239,7 +260,7 @@ module.exports = {
 		// this will automatically unmount anything that was already mounted
 		// in #tertiary, so we don't have to check the current state of
 		// __fullPostInstance before making another
-		__fullPostInstance = React.render(
+		__fullPostInstance = ReactDom.render(
 			React.createElement( FullPostDialog, {
 				blogId: blogId,
 				postId: postId,
@@ -279,8 +300,9 @@ module.exports = {
 		ensureStoreLoading( tagStore );
 
 		trackPageLoad( basePath, fullAnalyticsPageTitle, mcKey );
+		analytics.tracks.recordEvent( 'calypso_reader_tag_loaded' );
 
-		React.render(
+		ReactDom.render(
 			React.createElement( TagStream, {
 				key: 'tag-' + encodedTag,
 				store: tagStore,
@@ -310,8 +332,9 @@ module.exports = {
 		ensureStoreLoading( listStore );
 
 		trackPageLoad( basePath, fullAnalyticsPageTitle, mcKey );
+		analytics.tracks.recordEvent( 'calypso_reader_list_loaded' );
 
-		React.render(
+		ReactDom.render(
 			React.createElement( ListStream, {
 				key: 'tag-' + context.params.user + '-' + context.params.list,
 				store: listStore,
@@ -346,7 +369,7 @@ module.exports = {
 
 		pageTitleSetter( context )( 'Automattic' );
 
-		React.render(
+		ReactDom.render(
 			React.createElement( FollowingComponent, {
 				key: 'read-a8c',
 				listName: 'Automattic',
@@ -376,7 +399,7 @@ module.exports = {
 
 		trackPageLoad( basePath, fullAnalyticsPageTitle, mcKey );
 
-		React.render(
+		ReactDom.render(
 			React.createElement( LikedPostsStream, {
 				key: 'liked',
 				store: likedPostsStore,
@@ -405,7 +428,7 @@ module.exports = {
 
 		trackPageLoad( basePath, fullAnalyticsPageTitle, mcKey );
 
-		React.render(
+		ReactDom.render(
 			React.createElement( FollowingEdit, {
 				key: 'following-edit',
 				initialFollowUrl: context.query.follow,
@@ -422,7 +445,7 @@ module.exports = {
 			fullAnalyticsPageTitle = analyticsPageTitle + ' > Recommended Sites For You',
 			mcKey = 'recommendations_for_you';
 
-		React.render(
+		ReactDom.render(
 			React.createElement( RecommendedForYou, {
 				trackScrollPage: trackScrollPage.bind(
 					null,
@@ -439,19 +462,41 @@ module.exports = {
 		pageTitleSetter( context )( i18n.translate( 'Recommended Sites For You' ) );
 	},
 
-	listManagementContents: function( context ) {
-		var listManagementContents = require( 'reader/list-management/contents' ),
+	listManagementSites: function( context ) {
+		var listManagementSites = require( 'reader/list-management/sites' ),
 			basePath = route.sectionify( context.path ),
 			fullAnalyticsPageTitle = analyticsPageTitle + ' > Manage List',
-			mcKey = 'list_edit';
+			mcKey = 'list_sites';
 
 		pageTitleSetter( context )( i18n.translate( 'Manage List' ) );
 
 		trackPageLoad( basePath, fullAnalyticsPageTitle, mcKey );
 
-		React.render(
-			React.createElement( listManagementContents, {
-				key: 'list-management-contents',
+		ReactDom.render(
+			React.createElement( listManagementSites, {
+				key: 'list-management-sites',
+				list: {
+					owner: context.params.user,
+					slug: context.params.list
+				}
+			} ),
+			document.getElementById( 'primary' )
+		);
+	},
+
+	listManagementTags: function( context ) {
+		var listManagementTags = require( 'reader/list-management/tags' ),
+			basePath = route.sectionify( context.path ),
+			fullAnalyticsPageTitle = analyticsPageTitle + ' > Manage List',
+			mcKey = 'list_tags';
+
+		pageTitleSetter( context )( i18n.translate( 'Manage List' ) );
+
+		trackPageLoad( basePath, fullAnalyticsPageTitle, mcKey );
+
+		ReactDom.render(
+			React.createElement( listManagementTags, {
+				key: 'list-management-tags',
 				list: {
 					owner: context.params.user,
 					slug: context.params.list
@@ -465,13 +510,13 @@ module.exports = {
 		var listManagementDescriptionEdit = require( 'reader/list-management/description-edit' ),
 			basePath = route.sectionify( context.path ),
 			fullAnalyticsPageTitle = analyticsPageTitle + ' > Manage List Description',
-			mcKey = 'list_edit_description';
+			mcKey = 'list_edit';
 
 		pageTitleSetter( context )( i18n.translate( 'Manage List Description' ) );
 
 		trackPageLoad( basePath, fullAnalyticsPageTitle, mcKey );
 
-		React.render(
+		ReactDom.render(
 			React.createElement( listManagementDescriptionEdit, {
 				key: 'list-management-description-edit',
 				list: {
@@ -493,7 +538,7 @@ module.exports = {
 
 		trackPageLoad( basePath, fullAnalyticsPageTitle, mcKey );
 
-		React.render(
+		ReactDom.render(
 			React.createElement( listManagementFollowers, {
 				key: 'list-management-followers',
 				list: {
@@ -518,8 +563,9 @@ module.exports = {
 		ensureStoreLoading( feedStore );
 
 		trackPageLoad( basePath, fullAnalyticsPageTitle, mcKey );
+		analytics.tracks.recordEvent( 'calypso_reader_discover_viewed' );
 
-		React.render(
+		ReactDom.render(
 			React.createElement( SiteStream, {
 				key: 'site-' + blogId,
 				store: feedStore,
@@ -532,7 +578,8 @@ module.exports = {
 					mcKey
 				),
 				onUpdatesShown: trackUpdatesLoaded.bind( null, mcKey ),
-				suppressSiteNameLink: true
+				suppressSiteNameLink: true,
+				showBack: false
 			} ),
 			document.getElementById( 'primary' )
 		);

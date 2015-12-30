@@ -13,20 +13,33 @@ function getPurchase( props ) {
 	return props.selectedPurchase.data;
 }
 
+function getSelectedSite( props ) {
+	return props.selectedSite;
+}
+
+function goToCancelPurchase( props ) {
+	const { id } = getPurchase( props ),
+		{ slug } = getSelectedSite( props );
+
+	page( paths.cancelPurchase( slug, id ) );
+}
+
 function goToList() {
 	page( paths.list() );
 }
 
 function goToEditCardDetails( props ) {
-	const { domain, id, payment: { creditCard } } = getPurchase( props );
+	const { id, payment: { creditCard } } = getPurchase( props ),
+		{ slug } = getSelectedSite( props );
 
-	page( paths.editCardDetails( domain, id, creditCard.id ) );
+	page( paths.editCardDetails( slug, id, creditCard.id ) );
 }
 
 function goToManagePurchase( props ) {
-	const { domain, id } = getPurchase( props );
+	const { id } = getPurchase( props ),
+		{ slug } = getSelectedSite( props );
 
-	page( paths.managePurchase( domain, id ) );
+	page( paths.managePurchase( slug, id ) );
 }
 
 function isDataLoading( props ) {
@@ -51,8 +64,10 @@ function recordPageView( trackingSlug, props, nextProps = null ) {
 
 export {
 	getPurchase,
-	goToList,
+	getSelectedSite,
+	goToCancelPurchase,
 	goToEditCardDetails,
+	goToList,
 	goToManagePurchase,
 	isDataLoading,
 	recordPageView

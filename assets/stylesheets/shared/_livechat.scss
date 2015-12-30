@@ -340,7 +340,7 @@
 
 #habla_window_div.habla_window_div_base {
 	display:block!important;
-	z-index:99999999;
+	z-index: z-index( 'root', '#habla_window_div.habla_window_div_base' );
 }
 
 #habla_window_div #olark-callout-bubble,
@@ -648,18 +648,7 @@
 }
 
 #habla_window_div #habla_closebutton_a {
-
-	&:before {
-		display: inline-block;
-		width: 16px;
-		height: 16px;
-		font: 16px/1 Noticons;
-		content: '\f405';
-	}
-}
-
-#habla_window_div #habla_closebutton_a:hover {
-	background-color: rgba(255, 255, 255, 0.15);
+	display: none;
 }
 
 #habla_window_div #habla_popout_a {
@@ -1015,5 +1004,5 @@ div.hbl_pal_main_width {
 }
 
 .olrk-state-compressed div.hbl_pal_main_width {
-    width: 28px !important;
+	width: 28px !important;
 }

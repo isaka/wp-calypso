@@ -1,9 +1,9 @@
 /**
  * External Dependencies
  */
-var React = require( 'react' ),
+var ReactDom = require( 'react-dom' ),
+	React = require( 'react' ),
 	page = require( 'page' ),
-	qs = require( 'querystring' ),
 	some = require( 'lodash/collection/some' ),
 	capitalize = require( 'lodash/string/capitalize' );
 
@@ -63,7 +63,7 @@ function renderSinglePlugin( context, siteUrl, isWpcomPlugin ) {
 	window.scrollTo( 0, 0 );
 
 	// Render single plugin component
-	React.render(
+	ReactDom.render(
 		React.createElement( PluginComponent, {
 			path: context.path,
 			prevPath: lastPluginsListVisited || context.prevPath,
@@ -87,7 +87,7 @@ function getPathWithoutSiteSlug( context, site ) {
 }
 
 function renderPluginList( context, basePath, siteUrl ) {
-	var search = qs.parse( context.querystring ).s,
+	var search = context.query.s,
 		site = sites.getSelectedSite(),
 		analyticsPageTitle;
 
@@ -97,7 +97,7 @@ function renderPluginList( context, basePath, siteUrl ) {
 	titleActions.setTitle( i18n.translate( 'Plugins', { textOnly: true } ), { siteID: siteUrl } );
 
 	// Render multiple plugins component
-	React.render(
+	ReactDom.render(
 		React.createElement( PluginListComponent, {
 			path: basePath,
 			context: context,
@@ -119,7 +119,7 @@ function renderPluginList( context, basePath, siteUrl ) {
 function renderPluginsBrowser( context, siteUrl ) {
 	var site = sites.getSelectedSite(),
 		category = context.params.category,
-		searchTerm = qs.parse( context.querystring ).s,
+		searchTerm = context.query.s,
 		analyticsPageTitle;
 
 	lastPluginsListVisited = getPathWithoutSiteSlug( context, site );
@@ -138,7 +138,7 @@ function renderPluginsBrowser( context, siteUrl ) {
 	analyticsPageTitle = 'Plugin Browser' + ( category ? ': ' + category : '' );
 	analytics.pageView.record( context.pathname.replace( site.domain, ':site' ), analyticsPageTitle );
 
-	React.render(
+	ReactDom.render(
 		React.createElement( PluginBrowser, {
 			site: site ? site.slug : null,
 			path: context.path,
@@ -179,15 +179,6 @@ controller = {
 		var siteUrl = route.getSiteFragment( context.path );
 
 		renderPluginsBrowser( context, siteUrl );
-	},
-
-	jetpackManageActive: function( context, next ) {
-		sites.getSelectedOrAll().forEach( function( site ) {
-			if ( site.jetpack ) {
-				site.fetchModules();
-			}
-		} );
-		next();
 	},
 
 	jetpackCanUpdate: function( filter, context, next ) {

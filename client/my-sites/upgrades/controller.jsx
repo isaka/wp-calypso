@@ -2,6 +2,7 @@
  * External Dependencies
  */
 var page = require( 'page' ),
+	ReactDom = require( 'react-dom' ),
 	React = require( 'react' );
 
 /**
@@ -11,10 +12,11 @@ var analytics = require( 'analytics' ),
 	sites = require( 'lib/sites-list' )(),
 	route = require( 'lib/route' ),
 	i18n = require( 'lib/mixins/i18n' ),
-	ThemeActions = require( 'lib/themes/flux-actions' ),
+	activated = require( 'lib/themes/actions' ).activated,
 	Main = require( 'components/main' ),
 	upgradesActions = require( 'lib/upgrades/actions' ),
 	titleActions = require( 'lib/screen-title/actions' ),
+	setSection = require( 'state/ui/actions' ).setSection,
 	productsList = require( 'lib/products-list' )();
 
 module.exports = {
@@ -50,7 +52,7 @@ module.exports = {
 
 		analytics.pageView.record( basePath, 'Domain Search > Domain Registration' );
 
-		React.render(
+		ReactDom.render(
 			(
 				<CartData>
 					<DomainSearch
@@ -75,7 +77,7 @@ module.exports = {
 
 		analytics.pageView.record( basePath, 'Domain Search > Site Redirect' );
 
-		React.render(
+		ReactDom.render(
 			(
 				<CartData>
 					<SiteRedirect
@@ -98,7 +100,7 @@ module.exports = {
 
 		analytics.pageView.record( basePath, 'Domain Search > Domain Mapping' );
 
-		React.render(
+		ReactDom.render(
 			(
 				<Main>
 					<CartData>
@@ -114,8 +116,7 @@ module.exports = {
 
 	googleAppsWithRegistration: function( context ) {
 		var CartData = require( 'components/data/cart' ),
-			GoogleApps = require( 'components/upgrades/google-apps' ),
-			basePath = route.sectionify( context.path );
+			GoogleApps = require( 'components/upgrades/google-apps' );
 
 		titleActions.setTitle(
 			i18n.translate( 'Register %(domain)s', {
@@ -139,9 +140,9 @@ module.exports = {
 			page( '/checkout/' + sites.getSelectedSite().slug );
 		};
 
-		analytics.pageView.record( basePath, 'Domain Search > Domain Registration > Google Apps' );
+		analytics.pageView.record( '/domains/add/:site/google-apps', 'Domain Search > Domain Registration > Google Apps' );
 
-		React.render(
+		ReactDom.render(
 			(
 				<Main>
 					<CartData>
@@ -172,7 +173,7 @@ module.exports = {
 			siteID: context.params.domain
 		} );
 
-		React.render(
+		ReactDom.render(
 			(
 				<CheckoutData>
 					<Checkout
@@ -184,7 +185,7 @@ module.exports = {
 			document.getElementById( 'primary' )
 		);
 
-		React.render(
+		ReactDom.render(
 			(
 				<CartData>
 					<SecondaryCart selectedSite={ sites.getSelectedSite() } />
@@ -200,7 +201,7 @@ module.exports = {
 			basePath = route.sectionify( context.path );
 
 		analytics.pageView.record( basePath, 'Checkout Thank You' );
-		context.layout.setState( { noSidebar: true } );
+		context.store.dispatch( setSection( null, { hasSidebar: false } ) );
 
 		if ( ! lastTransaction ) {
 			page.redirect( '/plans' );
@@ -210,7 +211,7 @@ module.exports = {
 
 		titleActions.setTitle( i18n.translate( 'Thank You' ) );
 
-		React.render(
+		ReactDom.render(
 			React.createElement( CheckoutThankYouComponent, {
 				lastTransaction: lastTransaction,
 				productsList: productsList
@@ -218,7 +219,7 @@ module.exports = {
 			document.getElementById( 'primary' )
 		);
 
-		React.unmountComponentAtNode( document.getElementById( 'secondary' ) );
+		ReactDom.unmountComponentAtNode( document.getElementById( 'secondary' ) );
 
 		CheckoutThankYouComponent.setLastTransaction( null );
 	},
@@ -245,7 +246,9 @@ module.exports = {
 
 		if ( cartItems.hasOnlyProductsOf( cart, 'premium_theme' ) ) {
 			const { meta, extra: { source } } = cartAllItems[ 0 ];
-			ThemeActions.activated( meta, selectedSite, source, true );
+			// TODO: When this section is migrated to Redux altogether,
+			// use react-redux to `connect()` components and `dispatch()` actions.
+			context.store.dispatch( activated( meta, selectedSite, source, true ) );
 			page.redirect( '/design/' + selectedSite.slug );
 			return;
 		}

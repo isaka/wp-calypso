@@ -1,7 +1,8 @@
 /**
  * External dependencies
  */
-var React = require( 'react/addons' ),
+var ReactDom = require( 'react-dom' ),
+	React = require( 'react' ),
 	debug = require( 'debug' )( 'calypso:post-editor' ),
 	page = require( 'page' ),
 	classnames = require( 'classnames' ),
@@ -23,8 +24,8 @@ var actions = require( 'lib/posts/actions' ),
 	EditorTitleContainer = require( 'post-editor/editor-title/container' ),
 	EditorPageSlug = require( 'post-editor/editor-page-slug' ),
 	Gridicon = require( 'components/gridicon' ),
-	NoticeArrowLink = require( 'notices/arrow-link' ),
-	SimpleNotice = require( 'notices/simple-notice' ),
+	NoticeAction = require( 'components/notice/notice-action' ),
+	Notice = require( 'components/notice' ),
 	protectForm = require( 'lib/mixins/protect-form' ),
 	TinyMCE = require( 'components/tinymce' ),
 	EditorWordCount = require( 'post-editor/editor-word-count' ),
@@ -238,21 +239,21 @@ var PostEditor = React.createClass( {
 
 		if ( this.state.notice.link ) {
 			arrowLink = (
-				<NoticeArrowLink href={ this.state.notice.link }>
+				<NoticeAction href={ this.state.notice.link } external={ true }>
 					{ this.state.notice.action }
-				</NoticeArrowLink>
+				</NoticeAction>
 			);
 		}
 
 		return (
-			<SimpleNotice
+			<Notice
 				status={ 'is-' + this.state.notice.type }
 				showDismiss={ this.state.notice.type === 'success' ? false : true }
-				onClick={ this.onNoticeClick }
+				onDismissClick={ this.onNoticeClick }
 				className="post-editor__notice"
 				text={ this.state.notice.text }>
 				{ arrowLink }
-			</SimpleNotice>
+			</Notice>
 		);
 	},
 
@@ -288,7 +289,7 @@ var PostEditor = React.createClass( {
 				<div className="post-editor__inner">
 					<div className="post-editor__sidebar">
 						<div className="post-editor__sidebar-header">
-							{ config.isEnabled( 'editor-drafts' ) && this.state.showDrafts ?
+							{ this.state.showDrafts ?
 								<button className="post-editor__close" onClick={ this.toggleDrafts } aria-label={ this.translate( 'Close drafts list' ) }>
 									<Gridicon icon="cross" size={ 18 } />
 									<span>{ this.translate( 'Close' ) }</span>
@@ -308,11 +309,12 @@ var PostEditor = React.createClass( {
 								<span>{ this.translate( 'Write' ) }</span>
 							</button>
 						</div>
-						{ config.isEnabled( 'editor-drafts' ) && this.state.showDrafts ?
+						{ this.state.showDrafts ?
 							<DraftList { ...this.props }
 								onTitleClick={ this.toggleSidebar }
 								showAllActionsMenu={ false }
 								siteID={ site ? site.ID : null }
+								selectedId={ this.state.post && this.state.post.ID || null }
 							/>
 						: <div>
 							<EditorGroundControl
@@ -365,7 +367,7 @@ var PostEditor = React.createClass( {
 								{ this.state.post && isPage ?
 									<EditorPageSlug
 										slug={ this.state.post.slug }
-										path={ site.URL + '/' }
+										path={ this.state.post.URL ? utils.getPagePath( this.state.post ) : site.URL + '/' }
 									/> :
 									null
 								}
@@ -511,7 +513,7 @@ var PostEditor = React.createClass( {
 	onEditorFocus: function() {
 		// Fire a click when the editor is focused so that any global handlers have an opportunity to do their thing.
 		// In particular, this ensures that open popovers are closed when a user clicks into the editor.
-		React.findDOMNode( this.refs.editor ).click();
+		ReactDom.findDOMNode( this.refs.editor ).click();
 	},
 
 	saveRawContent: function() {
@@ -628,8 +630,12 @@ var PostEditor = React.createClass( {
 		}
 
 		previewPost = function() {
-			this._previewWindow.location = this.state.previewUrl;
-			this._previewWindow.focus();
+			if ( this._previewWindow ) {
+				this._previewWindow.location = this.state.previewUrl;
+				this._previewWindow.focus();
+			} else {
+				this._previewWindow = window.open( this.state.previewUrl, 'WordPress.com Post Preview' );
+			}
 		}.bind( this );
 
 		if ( status === 'publish' ) {

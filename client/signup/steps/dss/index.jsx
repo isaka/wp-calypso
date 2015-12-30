@@ -7,47 +7,136 @@ import debugFactory from 'debug';
 /**
  * Internal dependencies
  */
-import ThemeThumbnail from './theme-thumbnail';
+import DssThemeThumbnail from './theme-thumbnail';
 import FormLabel from 'components/forms/form-label';
 import SearchCard from 'components/search-card';
 import StepWrapper from 'signup/step-wrapper';
-import ThemeHelper from 'lib/themes/helpers';
 import DynamicScreenshotsActions from 'lib/dss/actions';
 import DSSImageStore from 'lib/dss/image-store';
+import ThemePreviewStore from 'lib/dss/preview-store';
+import ImagePreloader from 'components/image-preloader';
 
 const debug = debugFactory( 'calypso:dss' );
 
 export default React.createClass( {
 	displayName: 'DssThemeSelection',
 
+	propTypes: {
+		themes: React.PropTypes.array,
+		useHeadstart: React.PropTypes.bool,
+	},
+
 	getDefaultProps() {
 		return {
 			themes: [
-				'Boardwalk',
-				'Cubic',
-				'Edin',
-				'Cols',
-				'Minnow',
-				'Sequential',
-				'Penscratch',
-				'Intergalactic',
-				'Eighties'
+				{ name: 'Sela', slug: 'sela' },
+				{ name: 'Goran', slug: 'goran' },
+				{ name: 'Twenty Fifteen', slug: 'twentyfifteen' },
+				{ name: 'Sequential', slug: 'sequential' },
+				{ name: 'Colinear', slug: 'colinear' },
+				{ name: 'Edin', slug: 'edin' },
 			],
 
 			useHeadstart: false
 		};
 	},
 
+	getInitialState() {
+		return {
+			isLoading: false,
+			renderComplete: false,
+			markupAndStyles: {},
+			dssImage: null,
+			lastSearchTerm: '',
+		};
+	},
+
+	componentWillMount() {
+		ThemePreviewStore.on( 'change', this.updateMarkup );
+		DSSImageStore.on( 'change', this.updateScreenshots );
+		this.loadThemePreviews( this.props.themes );
+	},
+
+	componentWillUnmount() {
+		ThemePreviewStore.off( 'change', this.updateMarkup );
+		DSSImageStore.off( 'change', this.updateScreenshots );
+	},
+
+	componentWillReceiveProps( nextProps ) {
+		if ( nextProps.themes !== this.props.themes ) {
+			this.loadThemePreviews( nextProps.themes );
+		}
+	},
+
+	loadThemePreviews( themes ) {
+		debug( 'loading theme previews for these themes', themes );
+		themes.map( theme => DynamicScreenshotsActions.fetchThemePreview( 'pub/' + theme.slug ) );
+	},
+
+	updateMarkup() {
+		this.setState( { markupAndStyles: ThemePreviewStore.get() } );
+	},
+
+	updateScreenshots() {
+		const { isLoading, lastKey, imageResultsByKey } = DSSImageStore.get();
+		// If there is no search currently happening or no results for a current search...
+		if ( ! imageResultsByKey[ lastKey ] ) {
+			return this.setState( { isLoading, renderComplete: false, dssImage: null, lastSearchTerm: lastKey } );
+		}
+		const dssImage = imageResultsByKey[ lastKey ];
+		this.setState( { isLoading, dssImage, renderComplete: false, lastSearchTerm: lastKey } );
+	},
+
+	dssImageLoaded() {
+		debug( 'image preloading complete' );
+		this.setState( { renderComplete: true } );
+	},
+
 	handleSearch( searchString ) {
-		debug( 'processing search for', searchString );
 		if ( ! searchString ) {
 			return DynamicScreenshotsActions.resetScreenshots();
 		}
-		const { imageResultsByKey } = DSSImageStore.get();
-		if ( imageResultsByKey[ searchString ] ) {
-			return DynamicScreenshotsActions.updateScreenshotsFor( searchString );
+		const normalizedSearchString = searchString.toLowerCase().trim();
+		if ( normalizedSearchString.length < 3 ) {
+			return;
 		}
-		DynamicScreenshotsActions.fetchDSSImageFor( searchString );
+		debug( 'processing search for', normalizedSearchString );
+		const { imageResultsByKey } = DSSImageStore.get();
+		if ( imageResultsByKey[ normalizedSearchString ] ) {
+			return DynamicScreenshotsActions.updateScreenshotsFor( normalizedSearchString );
+		}
+		DynamicScreenshotsActions.fetchDSSImageFor( normalizedSearchString );
+	},
+
+	renderImageLoader() {
+		if ( this.state.renderComplete ) {
+			return '';
+		}
+		debug( 'preloading image', this.state.dssImage.url );
+		const placeholder = <div>…</div>;
+		return (
+			<ImagePreloader
+				className="dss-theme-selection__image-preloader"
+				onLoad={ this.dssImageLoaded }
+				src={ this.state.dssImage.url }
+				placeholder={ placeholder } />
+		);
+	},
+
+	renderTheme( theme ) {
+		return (
+			<DssThemeThumbnail
+				key={ theme.name }
+				themeName={ theme.name }
+				themeSlug={ theme.slug }
+				themeRepoSlug={ 'pub/' + theme.slug }
+				isLoading={ this.state.isLoading }
+				dssImage={ this.state.dssImage }
+				lastSearchTerm={ this.state.lastSearchTerm }
+				markupAndStyles={ this.state.markupAndStyles[ 'pub/' + theme.slug ] }
+				renderComplete={ this.state.renderComplete }
+				{ ...this.props }/>
+		);
 	},
 
 	renderContent() {
@@ -58,21 +147,14 @@ export default React.createClass( {
 					<SearchCard id="dss-theme-selection__search__field"
 						autoFocus={ true }
 						delaySearch={ true }
+						delayTimeout={ 450 }
 						placeholder={ this.translate( 'e.g., games' ) }
-						onSearch={ this.handleSearch }
-					/>
+						onSearch={ this.handleSearch } />
 				</div>
 				<div className="dss-theme-selection__screenshots">
 					<div className="dss-theme-selection__screenshots__pin">
 						<div className="dss-theme-selection__screenshots__themes">
-							{ this.props.themes.map( ( theme ) => {
-								return <ThemeThumbnail
-									key={ theme }
-									themeName={ theme }
-									themeSlug={ ThemeHelper.getSlugFromName( theme ) }
-									themeRepoSlug={ 'pub/' + ThemeHelper.getSlugFromName( theme ) }
-									{ ...this.props }/>;
-							} ) }
+							{ this.props.themes.map( this.renderTheme ) }
 						</div>
 					</div>
 				</div>
@@ -84,6 +166,7 @@ export default React.createClass( {
 						}
 					} ) }
 				</p>
+				{ this.state.dssImage ? this.renderImageLoader() : '' }
 			</div>
 		);
 	},

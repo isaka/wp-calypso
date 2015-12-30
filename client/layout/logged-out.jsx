@@ -1,32 +1,33 @@
 /**
  * External dependencies
  */
-var React = require( 'react' );
+var React = require( 'react' ),
+	classNames = require( 'classnames' ),
+	connect = require( 'react-redux' ).connect;
 
 /**
  * Internal dependencies
  */
-var Masterbar = require( './masterbar' ),
-	NoticesList = require( 'notices/notices-list' ),
-	notices = require( 'notices' );
 
-module.exports = React.createClass( {
+var MasterbarLoggedOut = require( 'layout/masterbar/logged-out' ),
+	GlobalNotices = require( 'components/global-notices' ),
+	notices = require( 'notices' ),
+	LoggedOutLayout;
+
+LoggedOutLayout = React.createClass( {
 	displayName: 'LayoutLoggedOut',
 
-	getInitialState: function() {
-		return {
-			section: undefined
-		};
-	},
-
 	render: function() {
-		var sectionClass = 'wp' + ( this.state.section ? ' is-section-' + this.state.section : '' );
+		var sectionClass = this.props.section ? ' is-section-' + this.props.section : '',
+			classes = classNames( 'wp', sectionClass, {
+				'has-no-sidebar': ! this.props.hasSidebar
+			} );
 
 		return (
-			<div className={ sectionClass }>
-				<Masterbar />
+			<div className={ classes }>
+				<MasterbarLoggedOut />
 				<div id="content" className="wp-content">
-					<NoticesList id="notices" notices={ notices.list } />
+					<GlobalNotices id="notices" notices={ notices.list } />
 					<div id="primary" className="wp-primary wp-section" />
 					<div id="secondary" className="wp-secondary" />
 				</div>
@@ -36,3 +37,10 @@ module.exports = React.createClass( {
 	}
 
 } );
+
+export default connect(
+	( state ) => {
+		const { section, hasSidebar } = state.ui;
+		return { section, hasSidebar };
+	}
+)( LoggedOutLayout );

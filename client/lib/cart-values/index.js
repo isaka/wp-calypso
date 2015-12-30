@@ -24,6 +24,18 @@ function applyCoupon( coupon ) {
 	};
 }
 
+function canRemoveFromCart( cart, cartItem ) {
+	if ( productsValues.isCredits( cartItem ) ) {
+		return false;
+	}
+
+	if ( cartItems.hasRenewalItem( cart ) && productsValues.isPrivateRegistration( cartItem ) ) {
+		return false;
+	}
+
+	return true;
+}
+
 /**
  * Compare two different cart objects and get the messages of newest one
  *
@@ -106,14 +118,25 @@ function getRefundPolicy( cart ) {
 	return 'genericRefund';
 }
 
+function isCreditCardPaymentsEnabled( cart ) {
+	return cart.allowed_payment_methods.indexOf( 'WPCOM_Billing_MoneyPress_Paygate' ) >= 0;
+}
+
+function isPayPalExpressEnabled( cart ) {
+	return cart.allowed_payment_methods.indexOf( 'WPCOM_Billing_PayPal_Express' ) >= 0;
+}
+
 module.exports = {
-	emptyCart: emptyCart,
-	applyCoupon: applyCoupon,
-	getNewMessages: getNewMessages,
-	cartItems: cartItems,
-	isPaidForFullyInCredits: isPaidForFullyInCredits,
-	isFree: isFree,
-	fillInAllCartItemAttributes: fillInAllCartItemAttributes,
-	fillInSingleCartItemAttributes: fillInSingleCartItemAttributes,
-	getRefundPolicy: getRefundPolicy
+	applyCoupon,
+	canRemoveFromCart,
+	cartItems,
+	emptyCart,
+	fillInAllCartItemAttributes,
+	fillInSingleCartItemAttributes,
+	getNewMessages,
+	getRefundPolicy,
+	isFree,
+	isPaidForFullyInCredits,
+	isPayPalExpressEnabled,
+	isCreditCardPaymentsEnabled
 };

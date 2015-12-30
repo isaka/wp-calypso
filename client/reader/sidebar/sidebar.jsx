@@ -4,13 +4,14 @@
 const assign = require( 'lodash/object/assign' ),
 	classnames = require( 'classnames' ),
 	closest = require( 'component-closest' ),
-	debug = require( 'debug' )( 'calypso:reader:sidebar' ),
 	map = require( 'lodash/collection/map' ),
 	some = require( 'lodash/collection/some' ),
 	startsWith = require( 'lodash/string/startsWith' ),
+	ReactDom = require( 'react-dom' ),
 	React = require( 'react' ),
 	page = require( 'page' ),
-	url = require( 'url' );
+	url = require( 'url' ),
+	last = require( 'lodash/array/last' );
 
 /**
  * Internal Dependencies
@@ -25,14 +26,11 @@ const layoutFocus = require( 'lib/layout-focus' ),
 	SidebarActions = require( 'lib/reader-sidebar/actions' ),
 	stats = require( 'reader/stats' ),
 	Gridicon = require( 'components/gridicon' ),
-	config = require( 'config' );
+	config = require( 'config' ),
+	discoverHelper = require( 'reader/discover/helper' );
 
 module.exports = React.createClass( {
 	displayName: 'ReaderSidebar',
-
-	componentWillMount: function() {
-		debug( 'Mounting the reader sidebar React component.' );
-	},
 
 	itemLinkClass: function( path, additionalClasses ) {
 		var basePathLowerCase = this.props.path.split( '?' )[0].replace( /\/edit$/, '' ).toLowerCase(),
@@ -115,14 +113,15 @@ module.exports = React.createClass( {
 	followTag: function( event ) {
 		var tag, subscription;
 		event.preventDefault();
-		tag = React.findDOMNode( this.refs.addTagInput ).value;
+		tag = ReactDom.findDOMNode( this.refs.addTagInput ).value;
 		subscription = Tags.getSubscription( TagActions.slugify( tag ) );
-		stats.recordAction( 'followed_topic' );
-		stats.recordGaEvent( 'Clicked Follow Topic', tag );
 		if ( subscription ) {
 			this.highlightNewTag( subscription );
 		} else {
 			TagActions.follow( tag );
+			stats.recordAction( 'followed_topic' );
+			stats.recordGaEvent( 'Clicked Follow Topic', tag );
+			stats.recordTrack( 'calypso_reader_reader_tag_followed' )
 		}
 	},
 
@@ -139,7 +138,7 @@ module.exports = React.createClass( {
 	highlightNewList: function( list ) {
 		list = ListStore.get( list.owner, list.slug );
 		window.location.href = url.resolve( 'https://wordpress.com', url.resolve( list.URL, 'edit' ) );
-		React.findDOMNode( this.refs.addListInput ).value = '';
+		ReactDom.findDOMNode( this.refs.addListInput ).value = '';
 	},
 
 	highlightNewTag: function( tag ) {
@@ -147,7 +146,7 @@ module.exports = React.createClass( {
 			page( '/tag/' + tag.slug );
 			window.scrollTo( 0, 0 );
 		} );
-		React.findDOMNode( this.refs.addTagInput ).value = '';
+		ReactDom.findDOMNode( this.refs.addTagInput ).value = '';
 	},
 
 	createList: function( event ) {
@@ -156,7 +155,7 @@ module.exports = React.createClass( {
 		stats.recordAction( 'add_list' );
 		stats.recordGaEvent( 'Clicked Create List' );
 
-		ReaderListActions.create( React.findDOMNode( this.refs.addListInput ).value );
+		ReaderListActions.create( ReactDom.findDOMNode( this.refs.addListInput ).value );
 	},
 
 	handleCreateListKeyDown: function( event ) {
@@ -189,15 +188,20 @@ module.exports = React.createClass( {
 			}
 
 			const listManagementUrls = [
-				listRelativeUrl + '/followers',
+				listRelativeUrl + '/tags',
 				listRelativeUrl + '/edit',
-				listRelativeUrl + '/description/edit',
+				listRelativeUrl + '/sites',
 			];
 
+			const lastPathSegment = last( this.props.path.split( '/' ) );
+			const isCurrentList = lastPathSegment && lastPathSegment.toLowerCase() === list.slug.toLowerCase();
+			const isActionButtonSelected = this.pathStartsWithOneOf( listManagementUrls );
+
 			const classes = classnames(
-				this.itemLinkClassStartsWithOneOf( [ listRelativeUrl ], { 'sidebar-dynamic-menu__list has-buttons': true } ),
 				{
-					'is-action-button-selected': this.pathStartsWithOneOf( listManagementUrls )
+					'sidebar-dynamic-menu__list has-buttons': true,
+					selected: isCurrentList || isActionButtonSelected,
+					'is-action-button-selected': isActionButtonSelected
 				}
 			);
 
@@ -248,25 +252,7 @@ module.exports = React.createClass( {
 		}, this );
 	},
 
-	getFollowingEditLink: function() {
-		var followingEditUrl = '/following/edit',
-			followingEditRel;
-
-		// If Calypso following/edit isn't yet enabled, use the Atlas version
-		if ( ! config.isEnabled( 'reader/following-edit' ) ) {
-			followingEditUrl = 'https://wordpress.com'.concat( followingEditUrl );
-			followingEditRel = 'external';
-		}
-
-		return {
-			url: followingEditUrl,
-			rel: followingEditRel
-		};
-	},
-
 	render: function() {
-		let followingEditLink = this.getFollowingEditLink();
-
 		return (
 			<ul className="wpcom-sidebar sidebar reader-sidebar" onClick={ this.handleClick }>
 				<li className="sidebar-menu sidebar-streams">
@@ -277,13 +263,13 @@ module.exports = React.createClass( {
 								<Gridicon icon="checkmark-circle" size={ 24 } />
 								<span className="menu-link-text">{ this.translate( 'Followed Sites' ) }</span>
 							</a>
-							<a href={ followingEditLink.url } rel={ followingEditLink.rel } className="add-new">{ this.translate( 'Manage' ) }</a>
+							<a href="/following/edit" className="add-new">{ this.translate( 'Manage' ) }</a>
 						</li>
 
 						{ this.renderTeams() }
 
 						{
-							config.isEnabled( 'reader/discover' )
+							discoverHelper.isEnabled()
 							? (
 									<li className={ this.itemLinkClass( '/discover', { 'sidebar-streams__discover': true } ) }>
 										<a href="/discover">
@@ -295,14 +281,14 @@ module.exports = React.createClass( {
 						}
 
 						{
-							config.isEnabled( 'reader/recommendations' ) ?
-						( <li className={ this.itemLinkClassStartsWithOneOf( [ '/recommendations', '/tags' ], { 'sidebar-streams__recommendations': true } ) }>
+							config.isEnabled( 'reader/recommendations' )
+							? ( <li className={ this.itemLinkClassStartsWithOneOf( [ '/recommendations', '/tags' ], { 'sidebar-streams__recommendations': true } ) }>
 								<a href="/recommendations">
 									<svg className="gridicon menu-link-icon" version="1.1" xmlns="http://www.w3.org/2000/svg" x="0px" y="0px" viewBox="0 0 24 24"><g><path d="M7.189,12.664l0.624-0.046l0.557-0.409l0.801-1.115l0.578-1.228l0.357-0.91l0.223-0.523l0.267-0.432 l0.49-0.409l0.578-0.5l0.445-0.682l0.267-1.046l0.29-1.934V3.159L12.931,3l0.467,0.046l0.534,0.227l0.49,0.363L14.8,4.25 l0.177,0.75V5.66l-0.088,0.865l-0.223,0.615l-0.378,0.75l-0.2,0.5l-0.246,0.546l-0.133,0.5v0.432l0.111,0.273l2.38-0.023 l1.135,0.069l0.823,0.113l0.49,0.159l0.288,0.319l0.424,0.523l0.156,0.454v0.319l-0.09,0.296l-0.2,0.227l-0.29,0.5l0.111,0.296 l0.223,0.409l0.201,0.204l0.111,0.364l-0.09,0.273l-0.267,0.296l-0.267,0.34l-0.111,0.364l0.088,0.319l0.157,0.363l0.11,0.342v0.25 l-0.11,0.363l-0.223,0.273l-0.313,0.296l-0.223,0.273l-0.088,0.273v0.319l0.023,0.409l-0.111,0.25l-0.313,0.342l-0.4,0.363 c0,0-0.156,0.137-0.378,0.25c-0.223,0.114-0.868,0.273-0.868,0.273l-0.846,0.091l-1.868-0.023l-1.937-0.091l-1.379-0.159 l-2.916-0.523L7.189,12.664z M3,13.986c0-0.939,0.761-1.7,1.702-1.7c0.939,0,1.702,0.762,1.702,1.7v4.596 c0,0.939-0.762,1.7-1.702,1.7C3.761,20.283,3,19.52,3,18.582V13.986z"/></g></svg>
 									<span className="menu-link-text">{ this.translate( 'Recommendations' ) }</span>
 								</a>
-						</li> ) :
-						( <li className={ this.itemLinkClass( '/recommendations', { 'sidebar-streams__recommendations': true } ) }>
+						</li> )
+						: ( <li className={ this.itemLinkClass( '/recommendations', { 'sidebar-streams__recommendations': true } ) }>
 							<a href="https://wordpress.com/recommendations/" rel="external">
 								<Gridicon icon="star-outline" />
 								<span className="menu-link-text">{ this.translate( 'Recommended Blogs' ) }</span>

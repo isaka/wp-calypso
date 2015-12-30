@@ -1,10 +1,10 @@
 /**
  * External Dependencies
  */
-var React = require( 'react' ),
+var ReactDom = require( 'react-dom' ),
+	React = require( 'react' ),
 	store = require( 'store' ),
-	page = require( 'page' ),
-	querystring = require( 'querystring' );
+	page = require( 'page' );
 
 /**
  * Internal Dependencies
@@ -198,7 +198,7 @@ module.exports = {
 			StatsComponent = NuxInsights;
 		}
 
-		React.render(
+		ReactDom.render(
 			React.createElement( StatsComponent, {
 				site: site,
 				followList: followList,
@@ -230,10 +230,12 @@ module.exports = {
 				];
 			},
 			activeFilter = false,
-			queryOptions = querystring.parse( context.querystring ),
+			queryOptions = context.query,
 			basePath = route.sectionify( context.path ),
 			statSummaryList,
 			summarySites;
+
+		window.scrollTo( 0, 0 );
 
 		titleActions.setTitle( i18n.translate( 'Stats', { textOnly: true } ) );
 
@@ -273,7 +275,7 @@ module.exports = {
 
 			recordVisitDate();
 
-			React.render(
+			ReactDom.render(
 				React.createElement( StatsComponent, {
 					period: activeFilter.period,
 					sites: sites,
@@ -290,7 +292,7 @@ module.exports = {
 		var currentSite,
 			siteId = context.params.site_id,
 			siteFragment = route.getSiteFragment( context.path ),
-			queryOptions = querystring.parse( context.querystring ),
+			queryOptions = context.query,
 			FollowList = require( 'lib/follow-list' ),
 			SiteStatsComponent = require( 'my-sites/stats/site' ),
 			NuxSite = require( 'my-sites/stats/nux/site' ),
@@ -481,7 +483,7 @@ module.exports = {
 				siteComponent = NuxSite;
 			}
 
-			React.render(
+			ReactDom.render(
 				React.createElement( siteComponent, {
 					date: date,
 					charts: charts,
@@ -520,7 +522,7 @@ module.exports = {
 		var site,
 			siteId = context.params.site_id,
 			siteFragment = route.getSiteFragment( context.path ),
-			queryOptions = querystring.parse( context.querystring ),
+			queryOptions = context.query,
 			StatsList = require( 'lib/stats/stats-list' ),
 			FollowList = require( 'lib/follow-list' ),
 			StatsSummaryComponent = require( 'my-sites/stats/summary' ),
@@ -620,7 +622,7 @@ module.exports = {
 				analyticsPageTitle + ' > ' + titlecase( activeFilter.period ) + ' > ' + titlecase( context.params.module )
 			);
 
-			React.render(
+			ReactDom.render(
 				React.createElement( StatsSummaryComponent, {
 					date: date,
 					context: context,
@@ -668,7 +670,7 @@ module.exports = {
 
 			analytics.pageView.record( '/stats/' + postOrPage + '/:post_id/:site', analyticsPageTitle + ' > Single ' + titlecase( postOrPage ) );
 
-			React.render(
+			ReactDom.render(
 				React.createElement( StatsPostComponent, {
 					siteId: siteId,
 					postId: postId,
@@ -735,7 +737,7 @@ module.exports = {
 				analyticsPageTitle + ' > Followers > ' + titlecase( followType )
 			);
 
-			React.render(
+			ReactDom.render(
 				React.createElement( FollowsComponent, {
 					path: context.path,
 					sites: sites,

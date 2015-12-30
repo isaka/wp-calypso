@@ -18,33 +18,41 @@ module.exports = React.createClass( {
 		path: React.PropTypes.string.isRequired
 	},
 
-	getDefaultProps: function() {
-		return {
-			tabs: [
-				{
-					title: i18n.translate( 'Password', { textOnly: true } ),
-					path: '/me/security',
-				},
-				{
-					title: i18n.translate( 'Two-Step Authentication', { textOnly: true } ),
-					path: '/me/security/two-step',
-				},
-				{
-					title: i18n.translate( 'Connected Applications', { textOnly: true } ),
-					path: '/me/security/connected-applications',
-				},
-				config.isEnabled( 'me/security/checkup' ) ? {
-					title: i18n.translate( 'Checkup', { textOnly: true } ),
-					path: '/me/security/checkup',
-				} : false
-			]
-		};
+	getNavtabs: function() {
+		var tabs = [
+			{
+				title: i18n.translate( 'Password', { textOnly: true } ),
+				path: '/me/security',
+			},
+			{
+				title: i18n.translate( 'Two-Step Authentication', { textOnly: true } ),
+				path: '/me/security/two-step',
+			},
+			{
+				title: i18n.translate( 'Connected Applications', { textOnly: true } ),
+				path: '/me/security/connected-applications',
+			}
+		];
+
+		if ( config.isEnabled( 'me/security/checkup' ) ) {
+			tabs.push( {
+				title: i18n.translate( 'Checkup', { textOnly: true } ),
+				path: '/me/security/checkup',
+			} );
+		}
+
+		return tabs;
+	},
+
+	getFilteredPath: function() {
+		var paramIndex = this.props.path.indexOf( '?' );
+		return ( paramIndex < 0 ) ? this.props.path : this.props.path.substring( 0, paramIndex );
 	},
 
 	getSelectedText: function() {
 		var text = '',
-			found = find( this.props.tabs, function( tab ) {
-				return this.props.path === tab.path;
+			found = find( this.getNavtabs(), function( tab ) {
+				return this.getFilteredPath() === tab.path;
 			}, this );
 
 		if ( 'undefined' !== typeof found ) {
@@ -62,13 +70,13 @@ module.exports = React.createClass( {
 		return (
 			<SectionNav selectedText={ this.getSelectedText() }>
 				<NavTabs>
-					{ this.props.tabs.map( function( tab ) {
+					{ this.getNavtabs().map( function( tab ) {
 						return (
 							<NavItem
 								key={ tab.path }
 								onClick={ this.onClick }
 								path={ tab.path }
-								selected={ tab.path === this.props.path }
+								selected={ tab.path === this.getFilteredPath() }
 							>
 								{ tab.title }
 							</NavItem>

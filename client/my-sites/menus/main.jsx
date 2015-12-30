@@ -1,7 +1,7 @@
 /**
  * External dependencies
  */
-var React = require( 'react/addons' ),
+var React = require( 'react' ),
 	find = require( 'lodash/collection/find' ),
 	debug = require( 'debug' )( 'calypso:menus:index' ); // eslint-disable-line no-unused-vars
 
@@ -16,7 +16,6 @@ var protectForm = require( 'lib/mixins/protect-form' ),
 	SidebarNavigation = require( 'my-sites/sidebar-navigation' ),
 	Main = require( 'components/main' ),
 	Menu = require( './menu' ),
-	Lock = require( 'lib/mixins/lock' ),
 	MenuSaveButton = require( './menus-save-button' ),
 	EmptyContent = require( 'components/empty-content' ),
 	LoadingPlaceholder = require( './loading-placeholder' ),
@@ -87,7 +86,7 @@ var Menus = React.createClass( {
 
 		result = window.confirm( leaveText ); // eslint-disable-line no-alert
 		if ( result ) {
-			analytics.ga.recordEvent( 'Menus', gaEvent[switchAction] );
+			analytics.ga.recordEvent( 'Menus', gaEvent[ switchAction ] );
 		}
 		return result;
 	},
@@ -105,28 +104,37 @@ var Menus = React.createClass( {
 				)
 			},
 			associationChanged: {
-				menu: function( menu, location ) {
+				menu: function( mainMenu, mainLocation ) {
 					return this.translate(
 						'You have selected menu "%(menu)s" for area "%(location)s", but you have not manually saved this change. Switching to a different menu area will discard your changes. Continue?',
-						{ args: { menu: menu.name, location: location.description }, textOnly: true }
+						{
+							args: {
+								menu: mainMenu.name,
+								location: mainLocation.description
+							},
+							textOnly: true
+						}
 					);
 				}.bind( this ),
-				noMenu: function( location ) {
+				noMenu: function( mainLocation ) {
 					return this.translate(
 						'You have removed the menu from area "%s", but you have not manually saved this change. Switching to a different menu area will discard your changes. Continue?',
-						{ args: [ location.description ], textOnly: true }
+						{
+							args: [ mainLocation.description ],
+							textOnly: true
+						}
 					);
 				}.bind( this )
 			}
 		};
 
 		if ( associationChanged ) {
-			return menu ?
-				i18nStrings.associationChanged.menu( menu, location ) :
-				i18nStrings.associationChanged.noMenu( location );
+			return menu
+				? i18nStrings.associationChanged.menu( menu, location )
+				: i18nStrings.associationChanged.noMenu( location );
 		}
 
-		return i18nStrings.menuChanged[switchAction];
+		return i18nStrings.menuChanged[ switchAction ];
 	},
 
 	recordUnloadEvent: function() {
@@ -203,9 +211,9 @@ var Menus = React.createClass( {
 				<SidebarNavigation />
 				<JetpackManageErrorPage
 					template="optInManage"
+					title={ this.translate( 'Looking to manage this site\'s menus?' ) }
 					site={ site }
-					actionURL={ site.getRemoteManagementURL() }
-					illustration="/calypso/images/drake/drake-jetpack.svg"
+					section="menus"
 					secondaryAction={ this.translate( 'Open Classic Menu Editor' ) }
 					secondaryActionURL={ site.options.admin_url + 'nav-menus.php' }
 					secondaryActionTarget="_blank"
@@ -221,12 +229,12 @@ var Menus = React.createClass( {
 			site = this.props.site,
 			menu;
 
-		if ( site && site.jetpack && site.modulesFetched && ! site.canManage() ) {
+		if ( site && site.jetpack && ! site.canManage() ) {
 			return this.renderJetpackManageDisabledMessage( site );
 		}
 
 		if ( ! data.menus || ! data.locations || ! data.hasDefaultMenu ||
-					! this.props.itemTypes.fetched || this.state.isBusy ) {
+			! this.props.itemTypes.fetched || this.state.isBusy ) {
 			return <LoadingPlaceholder />;
 		}
 
@@ -237,7 +245,6 @@ var Menus = React.createClass( {
 						selectedMenu={ selectedMenu }
 						selectedLocation={ selectedLocation }
 						siteMenus={ this.props.siteMenus }
-						itemsLock={ new Lock() }
 						setBusy={ this.setBusy }
 						confirmDiscard={ this.confirmDiscard.bind( null, 'menu' ) } />;
 		}

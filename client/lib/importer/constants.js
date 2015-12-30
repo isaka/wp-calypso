@@ -1,4 +1,5 @@
 export const appStates = Object.freeze( {
+	DEFUNCT: 'importer-defunct',
 	DISABLED: 'importer-disabled',
 	IMPORT_FAILURE: 'importer-import-failure',
 	IMPORT_SUCCESS: 'importer-import-success',
@@ -22,6 +23,8 @@ export const actionTypes = Object.freeze( {
 	API_REQUEST: 'importer-api-request',
 	API_FAILURE: 'importer-api-failure',
 	API_SUCCESS: 'importer-api-success',
+
+	RECEIVE_IMPORT_STATUS: 'importer-receive-import-status',
 
 	CANCEL_IMPORT: 'importer-cancel',
 	FAIL_UPLOAD: 'importer-fail-upload',

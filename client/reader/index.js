@@ -35,15 +35,15 @@ module.exports = function() {
 
 		page( '/', saveLastRoute, controller.removePost, controller.sidebar, controller.following );
 
-		page( '/read/blog/feed/:feed_id', saveLastRoute, controller.removePost, controller.sidebar, controller.feedListing );
+		page( '/read/blog/feed/:feed_id', saveLastRoute, controller.redirects, controller.removePost, controller.sidebar, controller.feedListing );
 		page.exit( '/read/blog/feed/:feed_id', controller.resetTitle );
 
 		page( '/read/post/feed/:feed/:post', setLastRoute, controller.feedPost );
-		page.exit( '/read/post/feed/:feed/:post', controller.resetTitle );
+		page.exit( '/read/post/feed/:feed/:post', controller.resetTitle, controller.removePost );
 
-		page( '/read/blog/id/:blog_id', saveLastRoute, controller.removePost, controller.sidebar, controller.blogListing );
+		page( '/read/blog/id/:blog_id', saveLastRoute, controller.redirects, controller.removePost, controller.sidebar, controller.blogListing );
 		page( '/read/post/id/:blog/:post', setLastRoute, controller.blogPost );
-		page.exit( '/read/post/id/:blog/:post', controller.resetTitle );
+		page.exit( '/read/post/id/:blog/:post', controller.resetTitle, controller.removePost );
 
 		page( '/tag/:tag', saveLastRoute, controller.removePost, controller.sidebar, controller.tagListing );
 	}
@@ -57,8 +57,9 @@ module.exports = function() {
 	}
 
 	if ( config.isEnabled( 'reader/list-management' ) ) {
-		page( '/read/list/:user/:list/edit', saveLastRoute, controller.removePost, controller.sidebar, controller.listManagementContents );
-		page( '/read/list/:user/:list/description/edit', saveLastRoute, controller.removePost, controller.sidebar, controller.listManagementDescriptionEdit );
+		page( '/read/list/:user/:list/sites', saveLastRoute, controller.removePost, controller.sidebar, controller.listManagementSites );
+		page( '/read/list/:user/:list/tags', saveLastRoute, controller.removePost, controller.sidebar, controller.listManagementTags );
+		page( '/read/list/:user/:list/edit', saveLastRoute, controller.removePost, controller.sidebar, controller.listManagementDescriptionEdit );
 		page( '/read/list/:user/:list/followers', saveLastRoute, controller.removePost, controller.sidebar, controller.listManagementFollowers );
 	}
 

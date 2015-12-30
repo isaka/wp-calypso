@@ -2,6 +2,7 @@
  * External dependencies
  */
 import React, { PropTypes } from 'react';
+import PureRenderMixin from 'react-pure-render/mixin';
 import omit from 'lodash/object/omit';
 import noop from 'lodash/utility/noop';
 
@@ -14,7 +15,7 @@ import PostListFetcher from 'components/post-list-fetcher';
 export default React.createClass( {
 	displayName: 'PostSelector',
 
-	mixins: [ React.addons.PureRenderMixin ],
+	mixins: [ PureRenderMixin ],
 
 	propTypes: {
 		type: PropTypes.string,
@@ -25,7 +26,8 @@ export default React.createClass( {
 		selected: PropTypes.number,
 		excludeTree: PropTypes.number,
 		orderBy: PropTypes.oneOf( [ 'title', 'date', 'modified', 'comment_count', 'ID' ] ),
-		order: PropTypes.oneOf( [ 'ASC', 'DESC' ] )
+		order: PropTypes.oneOf( [ 'ASC', 'DESC' ] ),
+		postListStoreId: PropTypes.string
 	},
 
 	getDefaultProps() {
@@ -35,7 +37,8 @@ export default React.createClass( {
 			multiple: false,
 			onChange: noop,
 			orderBy: 'title',
-			order: 'ASC'
+			order: 'ASC',
+			postListStoreId: 'post-selector'
 		};
 	},
 
@@ -61,6 +64,7 @@ export default React.createClass( {
 				excludeTree={ this.props.excludeTree }
 				orderBy={ this.props.orderBy }
 				order={ this.props.order }
+				postListStoreId={ this.props.postListStoreId }
 			>
 				<Selector
 					{ ...omit( this.props, 'children' ) }

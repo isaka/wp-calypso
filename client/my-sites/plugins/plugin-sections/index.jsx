@@ -1,7 +1,7 @@
 /**
  * External dependencies
  */
-var React = require( 'react/addons' ),
+var React = require( 'react' ),
 	titleCase = require( 'to-title-case' ),
 	find = require( 'lodash/collection/find' ),
 	filter = require( 'lodash/collection/filter' ),
@@ -30,7 +30,7 @@ module.exports = React.createClass( {
 
 	componentDidUpdate: function() {
 		if ( this.refs.content ) {
-			const node = this.refs.content.getDOMNode();
+			const node = this.refs.content;
 
 			if ( node && node.offsetHeight ) {
 				descriptionHeight = node.offsetHeight;

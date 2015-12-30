@@ -9,7 +9,7 @@ import classNames from 'classnames';
  */
 import paths from '../../paths';
 import CompactCard from 'components/card/compact';
-import Flag from 'components/flag';
+import Notice from 'components/notice';
 import {
 	getName,
 	isExpired,
@@ -23,7 +23,7 @@ import {
 
 const PurchaseItem = React.createClass( {
 	propTypes: {
-		domain: React.PropTypes.string,
+		slug: React.PropTypes.string,
 		purchase: React.PropTypes.object,
 		isPlaceholder: React.PropTypes.bool
 	},
@@ -33,9 +33,9 @@ const PurchaseItem = React.createClass( {
 
 		if ( showCreditCardExpiringWarning( purchase ) ) {
 			return (
-				<Flag type="is-error" icon="noticon-warning">
+				<Notice isCompact status="is-error" icon="spam">
 					{ this.translate( 'Credit card expiring soon' ) }
-				</Flag>
+				</Notice>
 			);
 		}
 
@@ -48,14 +48,14 @@ const PurchaseItem = React.createClass( {
 		if ( isExpiring( purchase ) ) {
 			if ( purchase.expiryMoment < this.moment().add( 30, 'days' ) ) {
 				return (
-					<Flag type="is-error" icon="noticon-warning">
+					<Notice isCompact status="is-error" icon="spam">
 						{ this.translate( 'Expires %(timeUntilExpiry)s', {
 							args: {
 								timeUntilExpiry: purchase.expiryMoment.fromNow()
 							},
 							context: 'timeUntilExpiry is of the form "[number] [time-period] ago" i.e. "3 days ago"'
 						} ) }
-					</Flag>
+					</Notice>
 				);
 			}
 
@@ -66,14 +66,14 @@ const PurchaseItem = React.createClass( {
 
 		if ( isExpired( purchase ) ) {
 			return (
-				<Flag type="is-error" icon="noticon-warning">
+				<Notice isCompact status="is-error" icon="spam">
 					{ this.translate( 'Expired %(timeSinceExpiry)s', {
 						args: {
 							timeSinceExpiry: purchase.expiryMoment.fromNow()
 						},
 						context: 'timeSinceExpiry is of the form "[number] [time-period] ago" i.e. "3 days ago"'
 					} ) }
-				</Flag>
+				</Notice>
 			);
 		}
 
@@ -131,7 +131,7 @@ const PurchaseItem = React.createClass( {
 
 		if ( ! isPlaceholder ) {
 			props = {
-				href: paths.managePurchase( this.props.domain, this.props.purchase.id ),
+				href: paths.managePurchase( this.props.slug, this.props.purchase.id ),
 				onClick: this.scrollToTop
 			};
 		}

@@ -2,7 +2,9 @@
  * External Dependencies
  */
 var page = require( 'page' ),
+	ReactDom = require( 'react-dom' ),
 	React = require( 'react' ),
+	ReduxProvider = require( 'react-redux' ).Provider,
 	defer = require( 'lodash/function/defer' );
 
 /**
@@ -38,7 +40,6 @@ module.exports = {
 			CartData = require( 'components/data/cart' ),
 			MainComponent = require( 'components/main' ),
 			EmptyContentComponent = require( 'components/empty-content' ),
-			siteSpecificPlansDetailsList = require( 'lib/site-specific-plans-details-list' )(),
 			site = sites.getSelectedSite(),
 			analyticsPageTitle = 'Plans',
 			basePath = route.sectionify( context.path ),
@@ -48,7 +49,7 @@ module.exports = {
 		if ( site && site.jetpack && ! config.isEnabled( 'manage/jetpack-plans' ) ) {
 			analytics.pageView.record( basePath + '/jetpack/:site', analyticsPageTitle + ' > Jetpack Plans Not Available' );
 
-			React.render(
+			ReactDom.render(
 				React.createElement( MainComponent, null,
 					React.createElement( EmptyContentComponent, {
 						title: i18n.translate( 'Plans are not available for Jetpack sites yet.' ),
@@ -76,14 +77,16 @@ module.exports = {
 		analytics.tracks.recordEvent( 'calypso_plans_view' );
 		analytics.pageView.record( analyticsBasePath, analyticsPageTitle );
 
-		React.render(
-			<CartData>
-				<Plans sites={ sites }
-					onSelectPlan={ onSelectPlan }
-					plans={ plans }
-					siteSpecificPlansDetailsList={ siteSpecificPlansDetailsList }
-					context={ context } />
-			</CartData>,
+		ReactDom.render(
+			<ReduxProvider store={ context.store }>
+				<CartData>
+					<Plans sites={ sites }
+						selectedSite={ site }
+						onSelectPlan={ onSelectPlan }
+						plans={ plans }
+						context={ context } />
+				</CartData>
+			</ReduxProvider>,
 			document.getElementById( 'primary' )
 		);
 	},
@@ -92,7 +95,6 @@ module.exports = {
 		var PlansCompare = require( 'components/plans/plans-compare' ),
 			Main = require( 'components/main' ),
 			CartData = require( 'components/data/cart' ),
-			siteSpecificPlansDetailsList = require( 'lib/site-specific-plans-details-list' )(),
 			features = require( 'lib/features-list' )(),
 			productsList = require( 'lib/products-list' )(),
 			analyticsPageTitle = 'Plans > Compare',
@@ -116,16 +118,18 @@ module.exports = {
 			siteID: context.params.domain
 		} );
 
-		React.render(
+		ReactDom.render(
 			<Main className="plans has-sidebar">
-				<CartData>
-					<PlansCompare sites={ sites }
-						onSelectPlan={ onSelectPlan }
-						plans={ plans }
-						features={ features }
-						siteSpecificPlansDetailsList={ siteSpecificPlansDetailsList }
-						productsList={ productsList } />
-				</CartData>
+				<ReduxProvider store={ context.store }>
+					<CartData>
+						<PlansCompare sites={ sites }
+							selectedSite={ site }
+							onSelectPlan={ onSelectPlan }
+							plans={ plans }
+							features={ features }
+							productsList={ productsList } />
+					</CartData>
+				</ReduxProvider>
 			</Main>,
 			document.getElementById( 'primary' )
 		);
@@ -135,7 +139,7 @@ module.exports = {
 		var CartData = require( 'components/data/cart' ),
 			PlansSelect = require( 'my-sites/plans/plans-select' );
 
-		React.render(
+		ReactDom.render(
 			<CartData>
 				<PlansSelect context={ context } sites={ sites } plans={ plans } />
 			</CartData>,

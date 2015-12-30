@@ -1,7 +1,8 @@
 /**
  * External dependencies
  */
-import React from 'react/addons';
+import React from 'react';
+import PureRenderMixin from 'react-pure-render/mixin';
 
 /**
  * Internal dependencies
@@ -12,7 +13,7 @@ export default React.createClass( {
 
 	displayName: 'DevdocsSidebar',
 
-	mixins: [ React.addons.PureRenderMixin ],
+	mixins: [ PureRenderMixin ],
 
 	render() {
 		return (
@@ -44,6 +45,12 @@ export default React.createClass( {
 						<Gridicon icon="layout-blocks" />
 						<a className="devdocs__sidebar-item" href="/devdocs/design">
 							UI Components
+						</a>
+					</li>
+					<li className="devdocs__navigation-item">
+						<Gridicon icon="heading" />
+						<a className="devdocs__sidebar-item" href="/devdocs/design/typography">
+							Typography
 						</a>
 					</li>
 					<li className="devdocs__navigation-item">

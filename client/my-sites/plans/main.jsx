@@ -1,25 +1,42 @@
 /**
  * External dependencies
  */
-var React = require( 'react/addons' );
+var React = require( 'react' ),
+	connect = require( 'react-redux' ).connect;
 
 /**
  * Internal dependencies
  */
 var analytics = require( 'analytics' ),
+	config = require( 'config' ),
 	observe = require( 'lib/mixins/data-observe' ),
 	PlanList = require( 'components/plans/plan-list' ),
-	siteSpecificPlansDetailsMixin = require( 'components/plans/site-specific-plan-details-mixin' ),
+	PlanOverview = require( './plan-overview' ),
 	SidebarNavigation = require( 'my-sites/sidebar-navigation' ),
-	UpgradesNavigation = require( 'my-sites/upgrades/navigation' );
+	UpgradesNavigation = require( 'my-sites/upgrades/navigation' ),
+	Gridicon = require( 'components/gridicon' ),
+	fetchSitePlans = require( 'state/sites/plans/actions' ).fetchSitePlans,
+	getPlansBySiteId = require( 'state/sites/plans/selectors' ).getPlansBySiteId,
+	getCurrentPlan = require( 'lib/plans' ).getCurrentPlan,
+	isJpphpBundle = require( 'lib/products-values' ).isJpphpBundle;
 
-module.exports = React.createClass( {
+var Plans = React.createClass( {
 	displayName: 'Plans',
 
-	mixins: [ siteSpecificPlansDetailsMixin, observe( 'sites', 'plans', 'siteSpecificPlansDetailsList' ) ],
+	mixins: [ observe( 'sites', 'plans' ) ],
 
 	getInitialState: function() {
 		return { openPlan: '' };
+	},
+
+	componentDidMount: function() {
+		this.props.fetchSitePlans( this.props.selectedSite.ID );
+	},
+
+	componentWillReceiveProps: function( nextProps ) {
+		if ( this.props.selectedSite.ID !== nextProps.selectedSite.ID ) {
+			this.props.fetchSitePlans( nextProps.selectedSite.ID );
+		}
 	},
 
 	openPlan: function( planId ) {
@@ -32,7 +49,7 @@ module.exports = React.createClass( {
 
 	comparePlansLink: function() {
 		var url = '/plans/compare',
-			selectedSite = this.props.sites.getSelectedSite();
+			selectedSite = this.props.selectedSite;
 
 		if ( this.props.plans.get().length <= 0 ) {
 			return '';
@@ -42,27 +59,51 @@ module.exports = React.createClass( {
 			url += '/' + selectedSite.slug;
 		}
 
-		return <a href={ url } className="compare-plans-link" onClick={ this.recordComparePlansClick }>{ this.translate( 'Compare Plans' ) }</a>;
-	},
-
-	sidebarNavigation: function() {
-		return <SidebarNavigation />;
+		return (
+			<a href={ url } className="compare-plans-link" onClick={ this.recordComparePlansClick }>
+				<Gridicon icon="clipboard" size={ 18 } />
+				{ this.translate( 'Compare Plans' ) }
+			</a>
+		);
 	},
 
 	render: function() {
 		var classNames = 'main main-column ',
-			hasJpphpBundle = this.props.siteSpecificPlansDetailsList &&
-				this.props.siteSpecificPlansDetailsList.hasJpphpBundle( this.props.sites.getSelectedSite().domain );
+			hasJpphpBundle,
+			currentPlan;
+
+		if ( this.props.sitePlans.hasLoadedFromServer ) {
+			currentPlan = getCurrentPlan( this.props.sitePlans.data );
+			hasJpphpBundle = isJpphpBundle( currentPlan );
+		}
+
+		if ( config.isEnabled( 'upgrades/free-trials' ) &&
+			this.props.sitePlans.hasLoadedFromServer &&
+			currentPlan.freeTrial ) {
+			return (
+				<PlanOverview
+					path={ this.props.context.path }
+					cart={ this.props.cart }
+					plan={ currentPlan }
+					selectedSite={ this.props.selectedSite } />
+			);
+		}
 
 		return (
 			<div className={ classNames } role="main">
-				{ this.sidebarNavigation() }
+				<SidebarNavigation />
+
 				<div id="plans" className="plans has-sidebar">
-					{ this.sectionNavigation() }
+					<UpgradesNavigation
+						path={ this.props.context.path }
+						cart={ this.props.cart }
+						selectedSite={ this.props.selectedSite } />
+
 					<PlanList
 						sites={ this.props.sites }
 						plans={ this.props.plans.get() }
-						siteSpecificPlansDetailsList={ this.props.siteSpecificPlansDetailsList }
+						enableFreeTrials={ true }
+						sitePlans={ this.props.sitePlans }
 						onOpen={ this.openPlan }
 						onSelectPlan={ this.props.onSelectPlan }
 						cart={ this.props.cart } />
@@ -70,14 +111,20 @@ module.exports = React.createClass( {
 				</div>
 			</div>
 		);
-	},
-
-	sectionNavigation: function() {
-		return (
-			<UpgradesNavigation
-				path={ this.props.context.path }
-				cart={ this.props.cart }
-				selectedSite={ this.props.sites.getSelectedSite() } />
-		);
 	}
 } );
+
+module.exports = connect(
+	function mapStateToProps( state, props ) {
+		return {
+			sitePlans: getPlansBySiteId( state, props.selectedSite.ID )
+		};
+	},
+	function mapDispatchToProps( dispatch ) {
+		return {
+			fetchSitePlans( siteId ) {
+				dispatch( fetchSitePlans( siteId ) );
+			}
+		};
+	}
+)( Plans );

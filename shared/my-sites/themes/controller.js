@@ -1,7 +1,9 @@
 /**
  * External Dependencies
  */
-var React = require( 'react' ),
+var ReactDom = require( 'react-dom' ),
+	React = require( 'react' ),
+	ReduxProvider = require( 'react-redux' ).Provider,
 	titlecase = require( 'to-title-case' );
 
 /**
@@ -38,20 +40,22 @@ var controller = {
 
 		analytics.pageView.record( basePath, analyticsPageTitle );
 
-		React.render(
-			React.createElement( ThemesComponent, {
-				key: site_id,
-				siteId: site_id,
-				sites: sites,
-				tier: tier,
-				search: context.query.s,
-				trackScrollPage: trackScrollPage.bind(
-					null,
-					basePath,
-					analyticsPageTitle,
-					'Themes'
-				)
-			} ),
+		ReactDom.render(
+			React.createElement( ReduxProvider, { store: context.store },
+				React.createElement( ThemesComponent, {
+					key: site_id,
+					siteId: site_id,
+					sites: sites,
+					tier: tier,
+					search: context.query.s,
+					trackScrollPage: trackScrollPage.bind(
+						null,
+						basePath,
+						analyticsPageTitle,
+						'Themes'
+					)
+				} )
+			),
 			document.getElementById( 'primary' )
 		);
 	}

@@ -1,31 +1,37 @@
 /**
  * External dependencies
  */
-import React from 'react'
-import map from 'lodash/collection/map'
-import forEach from 'lodash/collection/forEach'
-import first from 'lodash/array/first'
-import includes from 'lodash/collection/includes'
-import keys from 'lodash/object/keys'
-import debugModule from 'debug'
+import React from 'react';
+import map from 'lodash/collection/map';
+import forEach from 'lodash/collection/forEach';
+import first from 'lodash/array/first';
+import includes from 'lodash/collection/includes';
+import keys from 'lodash/object/keys';
+import debugModule from 'debug';
+import classNames from 'classnames';
 
 /**
  * Internal dependencies
  */
-import wpcom from 'lib/wp'
-import config from 'config'
-import analytics from 'analytics'
-import ValidationFieldset from 'signup/validation-fieldset'
-import FormLabel from 'components/forms/form-label'
-import FormPasswordInput from 'components/forms/form-password-input'
-import FormSettingExplanation from 'components/forms/form-setting-explanation'
-import FormTextInput from 'components/forms/form-text-input'
-import FormButton from 'components/forms/form-button'
-import notices from 'notices'
-import Notice from 'notices/notice'
-import LoggedOutForm from 'signup/logged-out-form'
-import formState from 'lib/form-state'
-import i18n from 'lib/mixins/i18n'
+import wpcom from 'lib/wp';
+import config from 'config';
+import analytics from 'analytics';
+import ValidationFieldset from 'signup/validation-fieldset';
+import FormLabel from 'components/forms/form-label';
+import FormPasswordInput from 'components/forms/form-password-input';
+import FormSettingExplanation from 'components/forms/form-setting-explanation';
+import FormTextInput from 'components/forms/form-text-input';
+import FormButton from 'components/forms/form-button';
+import notices from 'notices';
+import Notice from 'components/notice';
+import LoggedOutForm from 'components/logged-out-form';
+import formState from 'lib/form-state';
+import i18n from 'lib/mixins/i18n';
+import LoggedOutFormLinks from 'components/logged-out-form/links';
+import LoggedOutFormLinkItem from 'components/logged-out-form/link-item';
+import LoggedOutFormFooter from 'components/logged-out-form/footer';
+import { abtest } from 'lib/abtest';
+import { getValueFromProgressStore, mergeFormWithValue } from 'signup/utils';
 
 const VALIDATION_DELAY_AFTER_FIELD_CHANGES = 1500,
 	debug = debugModule( 'calypso:signup-form:form' );
@@ -44,21 +50,49 @@ export default React.createClass( {
 
 	displayName: 'SignupForm',
 
-	fieldNames: [ 'email', 'username', 'password' ],
-
 	getInitialState() {
 		return {
 			notice: null,
 			submitting: false,
 			form: null,
-			signedUp: false
+			signedUp: false,
+			validationInitialized: false
 		}
+	},
+
+	getInitialFields() {
+		return {
+			email: this.props.email || null,
+			username: null,
+			password: null
+		};
+	},
+
+	autoFillUsername( form ) {
+		const siteName = getValueFromProgressStore( {
+			stepName: 'site',
+			fieldName: 'site',
+			signupProgressStore: this.props.signupProgressStore
+		} );
+		let domainName = getValueFromProgressStore( {
+			stepName: 'domains',
+			fieldName: 'siteUrl',
+			signupProgressStore: this.props.signupProgressStore
+		} );
+		if ( domainName ) {
+			domainName = domainName.split( '.' )[ 0 ];
+		}
+		return mergeFormWithValue( {
+			form,
+			fieldName: 'username',
+			fieldValue: siteName || domainName || null
+		} );
 	},
 
 	componentWillMount() {
 		debug( 'Mounting the SignupForm React component.' );
 		this.formStateController = new formState.Controller( {
-			fieldNames: this.fieldNames,
+			initialFields: this.getInitialFields(),
 			sanitizerFunction: this.sanitize,
 			validatorFunction: this.validate,
 			onNewState: this.setFormState,
@@ -67,7 +101,18 @@ export default React.createClass( {
 			hideFieldErrorsOnChange: true,
 			initialState: this.props.step ? this.props.step.form : undefined
 		} );
-		this.setState( { form: this.formStateController.getInitialState() } );
+		let initialState = this.formStateController.getInitialState();
+		if ( this.props.signupProgressStore && abtest( 'autoFillUsernameSignup' ) === 'autoFill' ) {
+			initialState = this.autoFillUsername( initialState );
+		}
+		this.setState( { form: initialState } );
+	},
+
+	componentDidMount() {
+		// If we initialized the form with an email, we need to validate the email
+		if ( this.props.email ) {
+			this.handleBlur();
+		}
 	},
 
 	sanitizeEmail( email ) {
@@ -146,6 +191,9 @@ export default React.createClass( {
 			}
 
 			onComplete( error, messages );
+			if ( ! this.state.validationInitialized ) {
+				this.setState( { validationInitialized: true } );
+			}
 		} );
 	},
 
@@ -259,7 +307,7 @@ export default React.createClass( {
 				<ValidationFieldset errorMessages={ this.getErrorMessagesWithLogin( 'email' ) }>
 					<FormLabel htmlFor="email">{ this.translate( 'Your email address' ) }</FormLabel>
 					<FormTextInput
-						autoFocus={ true }
+						autoFocus={ ! this.props.email }
 						autoCapitalize="off"
 						autoCorrect="off"
 						className="signup-form__input"
@@ -267,9 +315,9 @@ export default React.createClass( {
 						id="email"
 						name="email"
 						type="email"
-						value={ formState.getFieldValue( this.state.form, 'email' ) || this.props.email }
+						value={ formState.getFieldValue( this.state.form, 'email' ) }
 						isError={ formState.isFieldInvalid( this.state.form, 'email' ) }
-						isValid={ formState.isFieldValid( this.state.form, 'email' ) }
+						isValid={ this.state.validationInitialized && formState.isFieldValid( this.state.form, 'email' ) }
 						onBlur={ this.handleBlur }
 						onChange={ this.handleChangeEvent } />
 				</ValidationFieldset>
@@ -277,6 +325,7 @@ export default React.createClass( {
 				<ValidationFieldset errorMessages={ this.getErrorMessagesWithLogin( 'username' ) }>
 					<FormLabel htmlFor="username">{ this.translate( 'Choose a username' ) }</FormLabel>
 					<FormTextInput
+						autoFocus={ ! ! this.props.email }
 						autoCapitalize="off"
 						autoCorrect="off"
 						className="signup-form__input"
@@ -353,13 +402,13 @@ export default React.createClass( {
 
 	formFooter() {
 		return (
-			<div>
+			<LoggedOutFormFooter>
 				{ this.getNotice() }
 				{ this.termsOfServiceLink() }
-				<FormButton className="signup-form__submit">
+				<FormButton className="signup-form__submit" disabled={ this.state.submitting || this.props.disabled }>
 					{ this.props.submitButtonText }
 				</FormButton>
-			</div>
+			</LoggedOutFormFooter>
 		);
 	},
 
@@ -380,25 +429,35 @@ export default React.createClass( {
 		if ( this.props.positionInFlow !== 0 ) {
 			return;
 		}
+
 		let logInUrl = this.localizeUrlWithSubdomain( config( 'login_url' ) );
 		if ( config.isEnabled( 'login' ) ) {
 			logInUrl = this.localizeUrlWithLastSlug( '/log-in' );
 		}
-		return <a href={ logInUrl } className="logged-out-form__link">{ this.translate( 'Already have a WordPress.com account? Log in now.' ) }</a>;
+		return (
+			<LoggedOutFormLinks>
+				<LoggedOutFormLinkItem href={ logInUrl }>
+					{ this.translate( 'Already have a WordPress.com account? Log in now.' ) }
+				</LoggedOutFormLinkItem>
+			</LoggedOutFormLinks>
+		);
 	},
 
 	render() {
 		return (
-			<LoggedOutForm
-				className='signup-form'
-				formFields={ this.formFields() }
-				formFooter={ this.props.formFooter || this.formFooter() }
-				formHeader={ this.props.formHeader }
-				footerLink={ this.props.footerLink || this.footerLink() }
-				locale={ this.props.locale }
-				onSubmit={ this.handleSubmit }
-				path={ this.props.path } />
+			<div className={ classNames( 'signup-form', this.props.className ) }>
+				<LoggedOutForm onSubmit={ this.handleSubmit } noValidate={ true }>
+					{ this.props.formHeader &&
+						<header className="signup-form__header">
+							{ this.props.formHeader }
+						</header>
+					}
+					{ this.formFields() }
+					{ this.props.formFooter || this.formFooter() }
+				</LoggedOutForm>
+
+				{ this.props.footerLink || this.footerLink() }
+			</div>
 		);
 	}
-
 } );

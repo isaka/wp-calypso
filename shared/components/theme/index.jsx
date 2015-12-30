@@ -1,7 +1,8 @@
 /**
  * External dependencies
  */
-var React = require( 'react/addons' ),
+var React = require( 'react' ),
+	PureRenderMixin = require( 'react-pure-render/mixin' ),
 	classNames = require( 'classnames' ),
 	noop = require( 'lodash/utility/noop' );
 
@@ -17,7 +18,7 @@ var Card = require( 'components/card' ),
  * Component
  */
 var Theme = React.createClass( {
-	mixins: [ React.addons.PureRenderMixin ],
+	mixins: [ PureRenderMixin ],
 
 	propTypes: {
 		// Theme ID (theme-slug)
@@ -47,14 +48,17 @@ var Theme = React.createClass( {
 				action: React.PropTypes.func,
 			} )
 		),
-		index: React.PropTypes.number
+		index: React.PropTypes.number,
+		// Label to show on screenshot hover.
+		actionLabel: React.PropTypes.string
 	},
 
 	getDefaultProps: function() {
 		return ( {
 			isPlaceholder: false,
 			buttonContents: [],
-			onMoreButtonClick: noop
+			onMoreButtonClick: noop,
+			actionLabel: ''
 		} );
 	},
 
@@ -67,16 +71,16 @@ var Theme = React.createClass( {
 	},
 
 	renderHover: function() {
-		var actionLabel = '';
+		var actionLabel = this.translate( 'Preview', {
+			context: 'appears on hovering a single theme thumbnail, opens the theme demo site preview'
+		} );
 
 		if ( this.props.active ) {
 			actionLabel = this.translate( 'Customize', {
 				context: 'appears on hovering the active single theme thumbnail, opens the customizer'
 			} );
 		} else {
-			actionLabel = this.translate( 'Preview', {
-				context: 'appears on hovering a single theme thumbnail, opens the theme demo site preview'
-			} );
+			actionLabel = this.props.actionLabel || actionLabel;
 		}
 
 		if ( this.props.screenshotClickUrl || this.props.onScreenshotClick ) {

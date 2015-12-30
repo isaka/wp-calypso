@@ -1,14 +1,14 @@
 /**
  * External dependencies
  */
-var React = require( 'react' ),
+var React = require( 'react/addons' ),
 	ReactCSSTransitionGroup = React.addons.CSSTransitionGroup;
 
 /**
  * Internal dependencies
  */
 var cartValues = require( 'lib/cart-values' ),
-	SimpleNotice = require( 'notices/simple-notice' ),
+	Notice = require( 'components/notice' ),
 	ValidationErrorList = require( 'notices/validation-error-list' ),
 	cartItems = cartValues.cartItems,
 	GoogleAppsUsers = require( './users' ),
@@ -53,9 +53,9 @@ var GoogleAppsDialog = React.createClass( {
 	validationErrors: function() {
 		if ( this.state.validationErrors ) {
 			return (
-				<SimpleNotice onClick={ this.removeValidationErrors } status="is-error">
+				<Notice onDismissClick={ this.removeValidationErrors } status="is-error">
 					<ValidationErrorList messages={ this.state.validationErrors } />
-				</SimpleNotice>
+				</Notice>
 			);
 		}
 	},

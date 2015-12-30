@@ -1,7 +1,8 @@
 /**
 * External dependencies
 */
-var React = require( 'react' );
+var React = require( 'react' ),
+	PureRenderMixin = require( 'react-pure-render/mixin' );
 
 /**
  * Internal dependencies
@@ -13,7 +14,7 @@ var Button = require( 'components/button' ),
 var Buttons = React.createClass( {
 	displayName: 'Buttons',
 
-	mixins: [ React.addons.PureRenderMixin ],
+	mixins: [ PureRenderMixin ],
 
 	getInitialState: function() {
 		return {
@@ -63,6 +64,40 @@ var Buttons = React.createClass( {
 						<Button primary scary icon ><Gridicon icon="cart" /></Button>
 						<Button primary scary disabled >Primary scary disabled button</Button>
 					</div>
+					<div className="design-assets__button-row">
+						<Button borderless>
+							<Gridicon icon="cross" /> Remove
+						</Button>
+						<Button borderless>
+							<Gridicon icon="trash" /> Trash
+						</Button>
+						<Button borderless>
+							<Gridicon icon="link-break" /> Disconnect
+						</Button>
+						<Button borderless>
+							<Gridicon icon="trash" />
+						</Button>
+						<Button borderless disabled>
+							<Gridicon icon="cross" /> Remove
+						</Button>
+					</div>
+					<div className="design-assets__button-row">
+						<Button borderless scary>
+							<Gridicon icon="cross" /> Remove
+						</Button>
+						<Button borderless scary>
+							<Gridicon icon="trash" /> Trash
+						</Button>
+						<Button borderless scary>
+							<Gridicon icon="link-break" /> Disconnect
+						</Button>
+						<Button borderless scary>
+							<Gridicon icon="trash" />
+						</Button>
+						<Button borderless scary disabled>
+							<Gridicon icon="cross" /> Remove
+						</Button>
+					</div>
 				</Card>
 			);
 		} else {
@@ -91,6 +126,40 @@ var Buttons = React.createClass( {
 						<Button compact primary scary icon ><Gridicon icon="user-circle" /> Compact primary scary icon button</Button>
 						<Button compact primary scary icon ><Gridicon icon="cart" /></Button>
 						<Button compact primary scary disabled >Compact primary scary disabled button</Button>
+					</div>
+					<div className="design-assets__button-row">
+						<Button compact borderless>
+							<Gridicon icon="cross" /> Remove
+						</Button>
+						<Button compact borderless>
+							<Gridicon icon="trash" /> Trash
+						</Button>
+						<Button compact borderless>
+							<Gridicon icon="link-break" /> Disconnect
+						</Button>
+						<Button compact borderless>
+							<Gridicon icon="trash" />
+						</Button>
+						<Button compact borderless disabled>
+							<Gridicon icon="cross" /> Remove
+						</Button>
+					</div>
+					<div className="design-assets__button-row">
+						<Button compact borderless scary>
+							<Gridicon icon="cross" /> Remove
+						</Button>
+						<Button compact borderless scary>
+							<Gridicon icon="trash" /> Trash
+						</Button>
+						<Button compact borderless scary>
+							<Gridicon icon="link-break" /> Disconnect
+						</Button>
+						<Button compact borderless scary>
+							<Gridicon icon="trash" />
+						</Button>
+						<Button compact borderless scary disabled>
+							<Gridicon icon="cross" /> Remove
+						</Button>
 					</div>
 				</Card>
 			);

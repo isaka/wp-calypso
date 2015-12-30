@@ -1,7 +1,7 @@
 /**
  * External dependencies
  */
-import React from 'react/addons'
+import React from 'react'
 import debugModule from 'debug';
 import page from 'page';
 import classNames from 'classnames';
@@ -18,17 +18,18 @@ import analytics from 'analytics';
 import PluginSiteList from 'my-sites/plugins/plugin-site-list';
 import HeaderCake from 'components/header-cake';
 import PluginMeta from 'my-sites/plugins/plugin-meta';
-import PluginInformation from 'my-sites/plugins/plugin-information';
 import PluginsStore from 'lib/plugins/store';
 import PluginsLog from 'lib/plugins/log-store';
 import PluginsDataStore from 'lib/plugins/wporg-data/store';
 import PluginsActions from 'lib/plugins/actions';
 import PluginNotices from 'lib/plugins/notices';
 import MainComponent from 'components/main';
+import SidebarNavigation from 'my-sites/sidebar-navigation';
 import JetpackManageErrorPage from 'my-sites/jetpack-manage-error-page';
 import PluginSections from 'my-sites/plugins/plugin-sections';
 import pluginsAccessControl from 'my-sites/plugins/access-control';
 import EmptyContent from 'components/empty-content';
+import FeatureExample from 'components/feature-example'
 
 /**
  * Module variables
@@ -84,9 +85,9 @@ export default React.createClass( {
 		}
 
 		const allSites = uniq( props.sites.getSelectedOrAllWithPlugins() ),
-			sites = props.isWpcomPlugin ?
-				reject( allSites, property( 'jetpack' ) ) :
-				filter( allSites, property( 'jetpack' ) ),
+			sites = props.isWpcomPlugin
+				? reject( allSites, property( 'jetpack' ) )
+				: filter( allSites, property( 'jetpack' ) ),
 			sitePlugin = PluginsStore.getPlugin( sites, props.pluginSlug );
 
 		let plugin = Object.assign( {
@@ -146,11 +147,12 @@ export default React.createClass( {
 	},
 
 	displayHeader() {
+		const recordEvent = this.recordEvent.bind( this, 'Clicked Header Plugin Back Arrow' );
 		return (
 			<HeaderCake
 				isCompact={ true }
 				onClick={ this.goBack }
-				onBackArrowClick={ this.recordEvent.bind( this, 'Clicked Header Plugin Back Arrow' ) } />
+				onBackArrowClick={ recordEvent } />
 		);
 	},
 
@@ -229,16 +231,43 @@ export default React.createClass( {
 	renderPluginPlaceholder( classes ) {
 		return (
 			<MainComponent>
+				<SidebarNavigation />
 				<div className={ classes }>
 					{ this.displayHeader() }
 					<PluginMeta
 						isPlaceholder
+						isWpcomPlugin={ this.props.isWpcomPlugin }
 						notices={ this.state.notices }
 						plugin={ this.state.plugin }
 						siteUrl={ this.props.siteUrl }
 						sites={ this.state.sites }
 						selectedSite={ this.props.sites.getSelectedSite() } />
-					<PluginInformation isPlaceholder />
+				</div>
+			</MainComponent>
+		);
+	},
+
+	getMockPlugin() {
+		const selectedSite = {
+			slug: 'no-slug',
+			canUpdateFiles: true,
+			name: 'Not a real site',
+			options: {
+				software_version: '1'
+			}
+		}
+		return (
+			<MainComponent>
+				<div className="plugin__page">
+					{ this.displayHeader() }
+					<PluginMeta
+						notices={ {} }
+						isWpcomPlugin={ this.props.isWpcomPlugin }
+						plugin={ this.state.plugin }
+						siteUrl={ 'no-real-url' }
+						sites={ [ selectedSite ] }
+						selectedSite={ selectedSite }
+						isMock={ true } />
 				</div>
 			</MainComponent>
 		);
@@ -251,17 +280,23 @@ export default React.createClass( {
 		if ( ! this.props.isWpcomPlugin && selectedSite && ! selectedSite.jetpack ) {
 			return (
 				<MainComponent>
+					<SidebarNavigation />
 					<EmptyContent
 						title={ this.translate( 'Oops! Not supported' ) }
 						line={ this.translate( 'This site doesn\'t support installing plugins. Switch to a self-hosted site to install and manage plugins' ) }
-						illustration={ '/calypso/images/drake/drake-whoops.svg' }
-						fullWidth={ true } />
+						illustration={ '/calypso/images/drake/drake-whoops.svg' } />
 				</MainComponent>
 			);
 		}
 
 		if ( this.state.accessError ) {
-			return <MainComponent><EmptyContent { ...this.state.accessError } /></MainComponent>;
+			return (
+				<MainComponent>
+					<SidebarNavigation />
+					<EmptyContent { ...this.state.accessError } />
+					{ this.state.accessError.featureExample ? <FeatureExample>{ this.state.accessError.featureExample }</FeatureExample> : null }
+				</MainComponent>
+			);
 		}
 
 		if ( this.state.isFetching ) {
@@ -272,16 +307,16 @@ export default React.createClass( {
 			return this.getPluginDoesNotExistView( selectedSite );
 		}
 
-		if ( selectedSite &&
-				selectedSite.modulesFetched &&
-				! selectedSite.canManage() ) {
+		if ( selectedSite && selectedSite.jetpack && ! selectedSite.canManage() ) {
 			return (
 				<MainComponent>
+					<SidebarNavigation />
 					<JetpackManageErrorPage
 						template="optInManage"
-						site={ this.props.site }
-						actionURL={ selectedSite.getRemoteManagementURL() }
-						illustration= '/calypso/images/drake/drake-jetpack.svg' />
+						title={ this.translate( 'Looking to manage this site\'s plugins?' ) }
+						site={ selectedSite }
+						section="plugins"
+						featureExample={ this.getMockPlugin() } />
 				</MainComponent>
 			);
 		}
@@ -290,16 +325,17 @@ export default React.createClass( {
 
 		return (
 			<MainComponent>
+				<SidebarNavigation />
 				<div className={ classes }>
 					{ this.displayHeader() }
 					<PluginMeta
+						isWpcomPlugin={ this.props.isWpcomPlugin }
 						notices={ this.state.notices }
 						plugin={ this.state.plugin }
 						siteUrl={ this.props.siteUrl }
 						sites={ this.state.sites }
 						selectedSite={ selectedSite }
 						isInstalling={ installInProgress } />
-					<PluginInformation plugin={ this.state.plugin } />
 					<PluginSections plugin={ this.state.plugin } />
 					{ this.renderSitesList() }
 				</div>

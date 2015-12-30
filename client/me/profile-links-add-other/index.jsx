@@ -1,7 +1,8 @@
 /**
  * External dependencies
  */
-var React = require( 'react' );
+var React = require( 'react' ),
+	LinkedStateMixin = require( 'react-addons-linked-state-mixin' );
 
 /**
  * Internal dependencies
@@ -10,13 +11,13 @@ var FormFieldset = require( 'components/forms/form-fieldset' ),
 	FormTextInput = require( 'components/forms/form-text-input' ),
 	FormButton = require( 'components/forms/form-button' ),
 	eventRecorder = require( 'me/event-recorder' ),
-	SimpleNotice = require( 'notices/simple-notice' );
+	Notice = require( 'components/notice' );
 
 module.exports = React.createClass( {
 
 	displayName: 'ProfileLinksAddOther',
 
-	mixins: [ React.addons.LinkedStateMixin, eventRecorder ],
+	mixins: [ LinkedStateMixin, eventRecorder ],
 
 	getInitialState: function() {
 		return {
@@ -114,11 +115,11 @@ module.exports = React.createClass( {
 		}
 
 		return (
-			<SimpleNotice
+			<Notice
 				className="profile-links-add-other__error"
 				isCompact
 				status="is-error"
-				onClick={ this.clearLastError }
+				onDismissClick={ this.clearLastError }
 				text={ this.state.lastError }
 			/>
 		);

@@ -2,6 +2,7 @@ var express = require( 'express' ),
 	fs = require( 'fs' ),
 	crypto = require( 'crypto' ),
 	qs = require( 'qs' ),
+	execSync = require( 'child_process' ).execSync,
 	cookieParser = require( 'cookie-parser' ),
 	i18nUtils = require( 'lib/i18n-utils' ),
 	debug = require( 'debug' )( 'calypso:pages' );
@@ -107,6 +108,14 @@ function getChunk( path ) {
 	}
 }
 
+function getCurrentBranchName() {
+	try {
+		return execSync('git rev-parse --abbrev-ref HEAD');
+	} catch(err) {
+		return undefined;
+	}
+}
+
 function getDefaultContext( request ) {
 	var context, chunk;
 
@@ -137,7 +146,7 @@ function getDefaultContext( request ) {
 	if ( CALYPSO_ENV === 'wpcalypso' ) {
 		context.badge = CALYPSO_ENV;
 		context.devDocs = true;
-		context.feedbackURL = 'https://github.com/Automattic/wp-calypso/issues/new';
+		context.feedbackURL = 'https://github.com/Automattic/wp-calypso/issues/';
 		context.faviconURL = '/calypso/images/favicons/favicon-wpcalypso.ico';
 	}
 
@@ -149,15 +158,16 @@ function getDefaultContext( request ) {
 
 	if ( CALYPSO_ENV === 'stage' ) {
 		context.badge = 'staging';
-		context.feedbackURL = 'https://github.com/Automattic/wp-calypso/issues/new';
+		context.feedbackURL = 'https://github.com/Automattic/wp-calypso/issues/';
 		context.faviconURL = '/calypso/images/favicons/favicon-staging.ico';
 	}
 
 	if ( CALYPSO_ENV === 'development' ) {
 		context.badge = 'dev';
 		context.devDocs = true;
-		context.feedbackURL = 'https://github.com/Automattic/wp-calypso/issues/new';
+		context.feedbackURL = 'https://github.com/Automattic/wp-calypso/issues/';
 		context.faviconURL = '/calypso/images/favicons/favicon-development.ico';
+		context.branchName = getCurrentBranchName();
 	}
 
 	if ( config.isEnabled( 'code-splitting' ) ) {

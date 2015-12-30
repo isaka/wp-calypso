@@ -1,12 +1,12 @@
-var React = require( 'react' ),
-	toTitleCase = require( 'to-title-case' );
+var React = require( 'react' );
 
 var FollowingStream = require( 'reader/following-stream' ),
 	EmptyContent = require( './empty' ),
 	ReaderTags = require( 'lib/reader-tags/tags' ),
 	ReaderTagActions = require( 'lib/reader-tags/actions' ),
 	TagSubscriptions = require( 'lib/reader-tags/subscriptions' ),
-	StreamHeader = require( 'reader/stream-header' );
+	StreamHeader = require( 'reader/stream-header' ),
+	stats = require( 'reader/stats' );
 
 var FeedStream = React.createClass( {
 
@@ -49,8 +49,8 @@ var FeedStream = React.createClass( {
 			ReaderTagActions.fetchTag( this.props.tag );
 			return this.translate( 'Loading Tag' );
 		}
-		// this crazy statement deals with strings that fail toTitleCase, like Japanese
-		return toTitleCase( tag.title || tag.slug ) || tag.title;
+
+		return tag.title || tag.slug;
 	},
 
 	isSubscribed: function() {
@@ -64,6 +64,9 @@ var FeedStream = React.createClass( {
 	toggleFollowing: function( isFollowing ) {
 		var tag = ReaderTags.get( this.props.tag );
 		ReaderTagActions[ isFollowing ? 'follow' : 'unfollow' ]( tag );
+		stats.recordAction( isFollowing ? 'followed_topic' : 'unfollowed_topic' );
+		stats.recordGaEvent( isFollowing ? 'Clicked Follow Topic' : 'Clicked Unfollow Topic', tag );
+		stats.recordTrack( isFollowing ? 'calypso_reader_reader_tag_followed' : 'calypso_reader_reader_tag_unfollowed' );
 	},
 
 	render: function() {

@@ -1,6 +1,7 @@
 /**
  * External Dependencies
  */
+import ReactDom from 'react-dom';
 import React from 'react';
 import page from 'page';
 import route from 'lib/route';
@@ -12,7 +13,6 @@ import i18n from 'lib/mixins/i18n';
 import sitesList from 'lib/sites-list';
 import PeopleList from './main';
 import EditTeamMember from './edit-team-member-form';
-import qs from 'querystring';
 import layoutFocus from 'lib/layout-focus';
 import analytics from 'analytics';
 import titlecase from 'to-title-case';
@@ -55,12 +55,12 @@ export default {
 function renderPeopleList( filter, context ) {
 	titleActions.setTitle( i18n.translate( 'People', { textOnly: true } ), { siteID: route.getSiteFragment( context.path ) } );
 
-	React.render(
+	ReactDom.render(
 		React.createElement( PeopleList, {
 			sites: sites,
 			peopleLog: PeopleLogStore,
 			filter: filter,
-			search: qs.parse( context.querystring ).s
+			search: context.query.s
 		} ),
 		document.getElementById( 'primary' )
 	);
@@ -101,7 +101,7 @@ function renderSingleTeamMember( context ) {
 		}
 	}
 
-	React.render(
+	ReactDom.render(
 		React.createElement( EditTeamMember, {
 			siteSlug: site && site.slug ? site.slug : undefined,
 			siteId: site && site.ID ? site.ID : undefined,

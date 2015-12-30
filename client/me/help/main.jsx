@@ -1,7 +1,8 @@
 /**
  * External dependencies
  */
-var React = require( 'react' );
+var React = require( 'react' ),
+	PureRenderMixin = require( 'react-pure-render/mixin' );
 
 /**
  * Internal dependencies
@@ -11,25 +12,26 @@ var Main = require( 'components/main' ),
 	FormSectionHeading = require( 'components/forms/form-section-heading' ),
 	MeSidebarNavigation = require( 'me/sidebar-navigation' ),
 	HelpSearch = require( './help-search' ),
+	ExternalLink = require( 'components/external-link' ),
 	Card = require( 'components/card' );
 
 module.exports = React.createClass( {
 	displayName: 'Help',
 
-	mixins: [ React.addons.PureRenderMixin ],
+	mixins: [ PureRenderMixin ],
 
 	getSupportLinks: function() {
 		return (
 			<Card>
 				<div className="help__support-link">
 					<h2 className="help__support-link-title">
-						<a href="https://support.wordpress.com/" target="__blank">{ this.translate( 'Support docs' ) }</a>
+						<ExternalLink icon={ true } href="https://support.wordpress.com/" target="__blank">{ this.translate( 'Support docs' ) }</ExternalLink>
 					</h2>
 					<p className="help__support-link-content">{ this.translate( 'Looking to learn more about a feature? Our docs have all the details.' ) }</p>
 				</div>
 				<div className="help__support-link">
 					<h2 className="help__support-link-title">
-						<a href="https://dailypost.wordpress.com/" target="__blank">{ this.translate( 'The daily post' ) }</a>
+						<ExternalLink icon={ true } href="https://dailypost.wordpress.com/" target="__blank">{ this.translate( 'The Daily Post' ) }</ExternalLink>
 					</h2>
 					<p className="help__support-link-content">{ this.translate( 'Get daily tips for your blog and connect with others to share your journey.' ) }</p>
 				</div>

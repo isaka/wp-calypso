@@ -9,10 +9,12 @@ var React = require( 'react' ),
  */
 var analytics = require( 'analytics' ),
 	productsValues = require( 'lib/products-values' ),
+	config = require( 'config' ),
 	isFreePlan = productsValues.isFreePlan,
 	isBusiness = productsValues.isBusiness,
 	isEnterprise = productsValues.isEnterprise,
-	cartItems = require( 'lib/cart-values' ).cartItems;
+	cartItems = require( 'lib/cart-values' ).cartItems,
+	puchasesPaths = require( 'me/purchases/paths' );
 
 module.exports = React.createClass( {
 	displayName: 'PlanActions',
@@ -25,7 +27,7 @@ module.exports = React.createClass( {
 		}
 
 		if ( this.props.isInSignup ) {
-			return this.newPlanActions();
+			return this.shouldOfferFreeTrial() ? this.freeTrialActions() : this.upgradeActions();
 		}
 
 		if ( this.siteHasThisPlan() ) {
@@ -49,15 +51,28 @@ module.exports = React.createClass( {
 			return null;
 		}
 
-		const canStartTrial = this.props.siteSpecificPlansDetails.can_start_trial;
+		return this.shouldOfferFreeTrial() ? this.freeTrialActions() : this.upgradeActions();
+	},
 
-		return canStartTrial ? this.newPlanActions() : this.upgradeActions();
+	freePlanButton: function() {
+		return (
+			<div>
+				<button className="button is-primary plan-actions__upgrade-button"
+					onClick={ this.handleAddToCart.bind( null, null, 'button' ) }>
+					{ this.translate( 'Select Free Plan' ) }
+				</button>
+			</div>
+		);
 	},
 
 	upgradeActions: function() {
+		if ( isFreePlan( this.props.plan ) ) {
+			return this.freePlanButton();
+		}
+
 		return (
 			<div>
-				<button className='button is-primary plan-actions__upgrade-button'
+				<button className="button is-primary plan-actions__upgrade-button"
 					onClick={ this.handleAddToCart.bind( null, this.cartItem( { isFreeTrial: false } ), 'button' ) }>
 					{ this.translate( 'Upgrade Now' ) }
 				</button>
@@ -125,6 +140,24 @@ module.exports = React.createClass( {
 		return true;
 	},
 
+	shouldOfferFreeTrial: function() {
+		if ( ! config.isEnabled( 'upgrades/free-trials' ) ) {
+			return false;
+		}
+
+		if ( ! this.props.enableFreeTrials ) {
+			return false;
+		}
+
+		const siteCanOfferTrial = this.props.sitePlan && this.props.sitePlan.canStartTrial;
+
+		if ( ! this.props.isInSignup && ! siteCanOfferTrial ) {
+			return false;
+		}
+
+		return true;
+	},
+
 	getImageButton: function() {
 		const classes = classNames( 'plan-actions__illustration', this.props.plan.product_slug );
 
@@ -141,26 +174,30 @@ module.exports = React.createClass( {
 		}
 
 		return (
-			<div onClick={ this.handleAddToCart.bind( null, this.cartItem( { isFreeTrial: false } ), 'button' ) } className={ classes } />
+			<div onClick={ this.handleAddToCart.bind( null, this.cartItem( { isFreeTrial: this.shouldOfferFreeTrial() } ), 'button' ) } className={ classes } />
 		);
 	},
 
-	newPlanActions: function() {
+	freeTrialActions: function() {
 		if ( isFreePlan( this.props.plan ) ) {
-			return <div>
-				<button className="button is-primary plan-actions__upgrade-button"
-					onClick={ this.handleAddToCart.bind( null, null, 'button' ) }>
-					{ this.translate( 'Select Free Plan' ) }
-				</button>
-			</div>;
+			return this.freePlanButton();
 		}
 
 		return (
 			<div>
 				<button className="button is-primary plan-actions__upgrade-button"
-					onClick={ this.handleAddToCart.bind( null, this.cartItem( { isFreeTrial: false } ), 'button' ) }>
-						{ this.translate( 'Upgrade Now', { context: 'Store action' } ) }
+					onClick={ this.handleAddToCart.bind( null, this.cartItem( { isFreeTrial: true } ), 'button' ) }>
+						{ this.translate( 'Start Free Trial', { context: 'Store action' } ) }
 				</button>
+
+				<small className="plan-actions__trial-period">
+					{ this.translate( 'Try it free for 14 days, no credit card needed, or {{a}}upgrade now{{/a}}.', {
+						context: 'Store action',
+						components: {
+							a: <a href="#"
+								onClick={ this.handleAddToCart.bind( null, this.cartItem( { isFreeTrial: false } ), 'link' ) } />
+						} } ) }
+				</small>
 			</div>
 		);
 	},
@@ -180,15 +217,17 @@ module.exports = React.createClass( {
 	},
 
 	managePlanButton: function() {
+		var link;
 		if ( this.planHasCost() ) {
+			link = puchasesPaths.managePurchase( this.props.site.slug, this.props.sitePlan.id );
 			return (
-				<a href="https://wordpress.com/my-upgrades" rel="external" className="button plan-actions__upgrade-button">{ this.translate( 'Manage Plan', { context: 'Link to current plan from /plans/' } ) }</a>
+				<a href={ link } className="button plan-actions__upgrade-button">{ this.translate( 'Manage Plan', { context: 'Link to current plan from /plans/' } ) }</a>
 			);
 		}
 	},
 
 	freePlanExpiration: function() {
-		if ( ! this.planHasCost() ) {
+		if ( config.isEnabled( 'upgrades/free-trials' ) && ! this.planHasCost() ) {
 			return (
 				<span className="plan-actions__plan-expiration">{ this.translate( 'Never expires', { context: 'Expiration info for free plan in /plans/' } ) }</span>
 			);
@@ -201,13 +240,13 @@ module.exports = React.createClass( {
 
 	getTrialPlanHint: function() {
 		var remainingDays = this.moment(
-				this.props.siteSpecificPlansDetails.expiry
+				this.props.sitePlan.expiry
 			).diff( this.moment(), 'days' ),
 			translationComponents = {
 				strong: <strong />,
 				link: <a href='#'
 					className="plan-actions__trial-upgrade-now"
-					onClick={ this.recordUpgradeTrialNowClick.bind( null, this.cartItem( { isFreeTrial: false } ), 'link' ) } />
+					onClick={ this.handleAddToCart.bind( null, this.cartItem( { isFreeTrial: false } ), 'link' ) } />
 			},
 			hint;
 
@@ -234,7 +273,7 @@ module.exports = React.createClass( {
 	},
 
 	getCurrentPlanHint: function() {
-		if ( ! this.props.siteSpecificPlansDetails ) {
+		if ( ! this.props.sitePlan ) {
 			return;
 		}
 
@@ -246,6 +285,7 @@ module.exports = React.createClass( {
 			<div>
 				<span className="plan-actions__current-plan-label" onClick={ this.recordCurrentPlanClick }>
 				{ this.translate( 'Your current plan', { context: 'Informing the user of their current plan on /plans/' } ) }</span>
+				{ this.freePlanExpiration() }
 			</div>
 		);
 	},
@@ -255,7 +295,7 @@ module.exports = React.createClass( {
 	},
 
 	isPlanOnTrial: function() {
-		return this.props.siteSpecificPlansDetails.free_trial;
+		return this.props.sitePlan.freeTrial;
 	},
 
 	placeholder: function() {

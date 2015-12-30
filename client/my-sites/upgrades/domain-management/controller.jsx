@@ -2,6 +2,7 @@
  * External Dependencies
  */
 import page from 'page';
+import ReactDom from 'react-dom';
 import React from 'react';
 
 /**
@@ -21,7 +22,6 @@ import ProductsList from 'lib/products-list';
 import SiteRedirectData from 'components/data/domain-management/site-redirect';
 import SitesList from 'lib/sites-list';
 import TransferData from 'components/data/domain-management/transfer';
-import User from 'lib/user';
 import WhoisData from 'components/data/domain-management/whois';
 import titleActions from 'lib/screen-title/actions';
 
@@ -29,7 +29,7 @@ const productsList = new ProductsList(),
 	sites = new SitesList();
 
 const renderPage = function( component ) {
-	React.render(
+	ReactDom.render(
 		component,
 		document.getElementById( 'primary' )
 	);
@@ -56,11 +56,10 @@ module.exports = {
 
 		renderPage(
 			<DomainManagementData
+				component={ DomainManagement.List }
 				context={ context }
 				productsList={ productsList }
-				sites={ sites }>
-				<DomainManagement.List />
-			</DomainManagementData>
+				sites={ sites } />
 		);
 	},
 
@@ -77,13 +76,11 @@ module.exports = {
 
 		renderPage(
 			<DomainManagementData
+				component={ DomainManagement.Edit }
 				context={ context }
 				productsList={ productsList }
-				sites={ sites }>
-				<DomainManagement.Edit
-					selectedSite={ sites.getSelectedSite() }
-					selectedDomainName={ context.params.domain } />
-			</DomainManagementData>
+				selectedDomainName={ context.params.domain }
+				sites={ sites } />
 		);
 	},
 
@@ -150,8 +147,6 @@ module.exports = {
 	},
 
 	domainManagementEmail( context ) {
-		const user = new User();
-
 		setTitle(
 			i18n.translate( 'Domain Management › Email' ),
 			context
@@ -168,8 +163,7 @@ module.exports = {
 				productsList={ productsList }
 				selectedDomainName={ context.params.domain }
 				context={ context }
-				sites={ sites }
-				user={ user.get() } />
+				sites={ sites } />
 		);
 	},
 
@@ -263,14 +257,11 @@ module.exports = {
 
 		renderPage(
 			<DomainManagementData
+				component={ DomainManagement.AddGoogleApps }
 				context={ context }
 				productsList={ productsList }
-				sites={ sites }>
-				<DomainManagement.AddGoogleApps
-					productsList={ productsList }
-					selectedSite={ sites.getSelectedSite() }
-					selectedDomainName={ context.params.domain } />
-			</DomainManagementData>
+				selectedDomainName={ context.params.domain }
+				sites={ sites } />
 		);
 	},
 

@@ -1,7 +1,8 @@
 /**
  * External dependencies
  */
-var React = require( 'react' );
+var React = require( 'react' ),
+	PureRenderMixin = require( 'react-pure-render/mixin' );
 
 /**
  * Internal dependencies
@@ -11,7 +12,7 @@ var FoldableCard = require( 'components/foldable-card' );
 module.exports = React.createClass( {
 	displayName: 'FoldableCard',
 
-	mixins: [ React.addons.PureRenderMixin ],
+	mixins: [ PureRenderMixin ],
 
 	render: function() {
 		return (
@@ -33,6 +34,14 @@ module.exports = React.createClass( {
 				<p>
 					<FoldableCard header="This is a disabled card" disabled>
 						You can't see me!
+					</FoldableCard>
+				</p>
+				<p>
+					<FoldableCard
+						header="This is a foldable card with a custom action icon"
+						icon="arrow-down"
+						>
+						These are its contents
 					</FoldableCard>
 				</p>
 				<p>

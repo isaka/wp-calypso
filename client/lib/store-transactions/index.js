@@ -81,11 +81,19 @@ TransactionFlow.prototype._pushStep = function( options ) {
 
 TransactionFlow.prototype._paymentHandlers = {
 	'WPCOM_Billing_MoneyPress_Stored': function() {
+		const {
+			mp_ref: payment_key,
+			stored_details_id,
+			payment_partner
+		} = this._initialData.payment.storedCard;
+
 		this._pushStep( { name: 'input-validation', first: true } );
 		debug( 'submitting transaction with stored card' );
 		this._submitWithPayment( {
 			payment_method: 'WPCOM_Billing_MoneyPress_Stored',
-			payment_key: this._initialData.payment.moneyPressReference
+			payment_key,
+			payment_partner,
+			stored_details_id
 		} );
 	},
 
@@ -128,7 +136,7 @@ TransactionFlow.prototype._paymentHandlers = {
 TransactionFlow.prototype._createPaygateToken = function( callback ) {
 	this._pushStep({ name: 'submitting-payment-key-request' });
 
-	createPaygateToken( this._initialData.payment.newCardDetails, function( error, paygateToken ) {
+	createPaygateToken( 'new_purchase', this._initialData.payment.newCardDetails, function( error, paygateToken ) {
 		if ( error ) {
 			return this._pushStep({
 				name: 'received-payment-key-response',
@@ -170,8 +178,8 @@ TransactionFlow.prototype._submitWithPayment = function( payment ) {
 	}.bind( this ) );
 };
 
-function createPaygateToken( cardDetails, callback ) {
-	wpcom.paygateConfiguration( function ( error, configuration ) {
+function createPaygateToken( requestType, cardDetails, callback ) {
+	wpcom.paygateConfiguration( { request_type: requestType }, function ( error, configuration ) {
 		if ( error ) {
 			callback( error );
 			return;
@@ -213,6 +221,7 @@ function getPaygateParameters( cardDetails ) {
 		number: cardDetails.number,
 		cvc: cardDetails.cvv,
 		zip: cardDetails['postal-code'],
+		country: cardDetails.country,
 		exp_month: cardDetails['expiration-date'].substring( 0, 2 ),
 		exp_year: '20' + cardDetails['expiration-date'].substring( 3, 5 )
 	};
@@ -232,7 +241,7 @@ function newCardPayment( newCardDetails ) {
 function storedCardPayment( storedCard ) {
 	return {
 		paymentMethod: 'WPCOM_Billing_MoneyPress_Stored',
-		moneyPressReference: storedCard.mp_ref
+		storedCard: storedCard,
 	};
 }
 

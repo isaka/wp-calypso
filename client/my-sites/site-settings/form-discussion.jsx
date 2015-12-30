@@ -8,13 +8,14 @@ var React = require( 'react' ),
  * Internal dependencies
  */
 var formBase = require( './form-base' ),
-	protectForm = require( 'lib/mixins/protect-form' );
+	protectForm = require( 'lib/mixins/protect-form' ),
+	dirtyLinkedState = require( 'lib/mixins/dirty-linked-state' );
 
 module.exports = React.createClass( {
 
 	displayName: 'SiteSettingsFormDiscussion',
 
-	mixins: [ React.addons.LinkedStateMixin, protectForm.mixin, formBase ],
+	mixins: [ dirtyLinkedState, protectForm.mixin, formBase ],
 
 	discussionAttributes: [
 		'default_pingback_flag',
@@ -178,7 +179,7 @@ module.exports = React.createClass( {
 								name="thread_comments_depth"
 								valueLink={ this.linkState( 'thread_comments_depth' ) }
 								disabled={ this.state.fetchingSettings }
-								onClick={ this.recordEvent.bind( this, 'Selected Comment Nesting Level' ) }
+								onClick={ this.recordClickEventAndStop.bind( this, 'Selected Comment Nesting Level' ) }
 								>
 									<option value="2">2</option>
 									<option value="3">3</option>
@@ -223,7 +224,7 @@ module.exports = React.createClass( {
 								name="default_comments_page"
 								valueLink={ this.linkState( 'default_comments_page' ) }
 								disabled={ this.state.fetchingSettings }
-								onClick={ this.recordEvent.bind( this, 'Selected Comment Page Display Default' ) }
+								onClick={ this.recordClickEventAndStop.bind( this, 'Selected Comment Page Display Default' ) }
 								>
 									<option value="newest">{ this.translate( 'last' ) }</option>
 									<option value="oldest">{ this.translate( 'first' ) }</option>
