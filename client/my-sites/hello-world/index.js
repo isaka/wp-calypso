@@ -10,5 +10,5 @@ import controller from 'my-sites/controller';
 import helloWorldController from './controller';
 
 export default () => {
-	page( '/hello-world/:domain?', controller.siteSelection, controller.navigation, helloWorldController.helloWorld );
+	page( '/hello-world/:domain?', controller.siteSelection, controller.navigation, helloWorldController.helloWorld() );
 };
